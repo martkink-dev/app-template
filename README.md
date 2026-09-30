@@ -121,6 +121,12 @@ Level Security enabled. See `AGENTS.md` for the full rules.
 - [Deploy](docs/checklists/deploy.md)
 - [Security](docs/checklists/security.md)
 
+## Checklists
+
+- [Start a new app](docs/checklists/new-app.md)
+- [Deploy](docs/checklists/deploy.md)
+- [Security](docs/checklists/security.md)
+
 ## For AI assistants
 
 Project rules are in [`AGENTS.md`](./AGENTS.md). `CLAUDE.md` imports it.
