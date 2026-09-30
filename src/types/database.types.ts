@@ -34,26 +34,79 @@ export type Database = {
   };
   public: {
     Tables: {
+      invitations: {
+        Row: {
+          accepted_at: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string | null;
+          revoked_at: string | null;
+          role: Database["public"]["Enums"]["app_role"];
+          token_hash: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at: string;
+          id?: string;
+          invited_by?: string | null;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["app_role"];
+          token_hash: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string | null;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["app_role"];
+          token_hash?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invitations_invited_by_fkey";
+            columns: ["invited_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
           created_at: string;
           display_name: string | null;
+          email: string;
           id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          status: Database["public"]["Enums"]["account_status"];
           updated_at: string;
         };
         Insert: {
           avatar_url?: string | null;
           created_at?: string;
           display_name?: string | null;
+          email: string;
           id: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          status?: Database["public"]["Enums"]["account_status"];
           updated_at?: string;
         };
         Update: {
           avatar_url?: string | null;
           created_at?: string;
           display_name?: string | null;
+          email?: string;
           id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          status?: Database["public"]["Enums"]["account_status"];
           updated_at?: string;
         };
         Relationships: [];
@@ -63,10 +116,11 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
     };
     Enums: {
-      [_ in never]: never;
+      account_status: "active" | "inactive";
+      app_role: "admin" | "member";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -196,6 +250,9 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      account_status: ["active", "inactive"],
+      app_role: ["admin", "member"],
+    },
   },
 } as const;

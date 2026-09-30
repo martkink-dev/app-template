@@ -26,10 +26,14 @@ Go through this list before the first production release and then regularly
 
 ## Keys and secrets
 
-- [ ] `SUPABASE_SECRET_KEY` appears only in `src/lib/supabase/admin.ts` and
-      `.env.example` (search with Ctrl + Shift + F in VS Code).
+- [ ] `SUPABASE_SECRET_KEY` appears only in `src/lib/supabase/admin.ts`,
+      `scripts/invite-admin.mjs` and `.env.example` (search with
+      Ctrl + Shift + F in VS Code).
+- [ ] Every use of `createAdminClient()` has a comment explaining why, and
+      user-triggered uses run only after `requireAdmin()` or an equivalent
+      check.
 - [ ] No variable containing a secret starts with `NEXT_PUBLIC_`.
-- [ ] `.env.local` is not in Git.
+- [ ] `.env.local` and any temporary env files are not in Git.
 - [ ] Secrets are stored only in `.env.local`, Vercel and GitHub Secrets.
 - [ ] If a key has leaked: rotate it in Supabase immediately and update Vercel
       and GitHub.
@@ -37,12 +41,27 @@ Go through this list before the first production release and then regularly
 ## Authentication
 
 - [ ] Server code checks the user with `getClaims()`, never `getSession()`.
-- [ ] Every protected page and Server Action checks the user itself; the proxy
-      is not the only protection.
+- [ ] Every protected page and Server Action checks the user itself
+      (`requireUser()` / `requireAdmin()`); the proxy is not the only
+      protection.
 - [ ] The `next` redirect parameter is only accepted when it is a relative path
-      starting with `/` (prevents redirects to other sites).
+      starting with `/` (`safeRedirectPath`).
 - [ ] Auth Redirect URLs contain only your own domains.
-- [ ] Email confirmation is enabled in prod.
+- [ ] **Public sign-up is off** in staging and prod
+      (Authentication → Sign In / Providers → _Allow new users to sign up_).
+- [ ] Password settings in staging and prod match
+      `src/lib/validations/password.ts` (minimum 12 characters, lowercase,
+      uppercase, digits and symbols).
+- [ ] Optional (paid plans): leaked password protection is enabled.
+
+## User management
+
+- [ ] Users cannot update `profiles.role`, `profiles.status` or
+      `profiles.email` through the API (column grants).
+- [ ] Only the people who need it have the `admin` role. Review the list in
+      `/admin/users`.
+- [ ] People who have left are deactivated or deleted.
+- [ ] Old open invitations are cancelled.
 
 ## Input and output
 

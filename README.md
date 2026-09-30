@@ -120,6 +120,7 @@ Level Security enabled. See `AGENTS.md` for the full rules.
 - [Start a new app](docs/checklists/new-app.md)
 - [Deploy](docs/checklists/deploy.md)
 - [Security](docs/checklists/security.md)
+- [User management module](docs/modules/user-management.md)
 
 ## Checklists
 

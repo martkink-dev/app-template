@@ -18,17 +18,24 @@
 - [ ] **Authentication → URL Configuration** in the **staging** project:
       Redirect URLs = Vercel preview URLs
       (`https://*-<vercel-team>.vercel.app/**`).
+- [ ] **Authentication settings in both projects** (these are not part of
+      migrations; `supabase/config.toml` only affects local development):
+  - [ ] **Sign In / Providers:** _Allow new users to sign up_ = **off**.
+  - [ ] **Email provider:** _Confirm email_ may stay on; invited users are
+        created as already confirmed.
+  - [ ] **Password settings:** minimum length **12**; required characters
+        **lowercase, uppercase letters, digits and symbols**.
 
 ### Vercel
 
 - [ ] **Add New → Project**, import the GitHub repository
       (framework is detected as Next.js).
 - [ ] **Environment Variables:**
-  - **Production** → prod `NEXT_PUBLIC_SUPABASE_URL` and
-    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  - **Production** → prod `NEXT_PUBLIC_SUPABASE_URL`,
+    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`
   - **Preview** → staging values of the same variables
-  - `SUPABASE_SECRET_KEY` only if the app uses `admin.ts`; mark it
-    **Sensitive**, never `NEXT_PUBLIC_`.
+  - Mark `SUPABASE_SECRET_KEY` as **Sensitive**; never prefix it with
+    `NEXT_PUBLIC_`. The user management module needs it.
 - [ ] **Settings → Functions → Region:** same region as Supabase
       (Frankfurt = `fra1`). The default region is in the USA, which makes
       every database call slow.
@@ -42,6 +49,22 @@
       Tokens), `SUPABASE_STAGING_DB_PASSWORD`, `SUPABASE_PRODUCTION_DB_PASSWORD`.
 - [ ] **Actions → Database migrations → Run workflow** once and confirm that
       both jobs are green.
+
+### User management: first admin (staging, then prod)
+
+Run after the migrations have reached the project.
+
+- [ ] Create a temporary file `.env.bootstrap.local` with the project's
+      `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`.
+- [ ] Create the invitation:
+
+  ```bash
+  node --env-file=.env.bootstrap.local scripts/invite-admin.mjs you@example.com https://<your-domain>
+  ```
+
+- [ ] **Delete `.env.bootstrap.local`.**
+- [ ] Open the printed link, set a password and check that `/admin/users`
+      opens.
 
 ## Every change
 
@@ -66,5 +89,7 @@
       **Instant Rollback**.
 - [ ] **Database:** never fix production by hand in the dashboard. Write a new
       migration that fixes the problem and ship it through a PR.
+- [ ] **No admin can sign in:** create a new admin invitation with
+      `scripts/invite-admin.mjs` (see _First admin_ above).
 - [ ] Know your backup options before you need them (they depend on the
       Supabase plan).
