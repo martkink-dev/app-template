@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:types": "supabase gen types typescript --local > src/types/database.types.ts && prettier --write src/types/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/types/database.types.ts && prettier --write src/types/database.types.ts",
+    "users:invite-admin": "node --env-file=.env.local scripts/invite-admin.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

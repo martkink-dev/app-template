@@ -7,8 +7,10 @@ import type { Database } from "@/types/database.types";
 /**
  * Routes reachable without a session. Everything else requires sign-in
  * (secure by default). Adjust per app.
+ *
+ * /invite: invitation links are opened by people who have no account yet.
  */
-const PUBLIC_PATHS = ["/", "/login", "/auth"];
+const PUBLIC_PATHS = ["/", "/login", "/auth", "/invite"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(

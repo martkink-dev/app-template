@@ -92,6 +92,14 @@ supabase/
 - Never commit secrets. Local values live in `.env.local` (git-ignored).
   When adding a variable, also add it (without a value) to `.env.example`.
 
+## User management
+
+- Roles and invitations: see `docs/modules/user-management.md`.
+- Protect pages and Server Actions with `requireUser()` or `requireAdmin()`
+  from `src/lib/auth/guards.ts`. In RLS use `(select public.is_admin())`.
+- Never let users write `profiles.role`, `status` or `email`.
+- New tables referencing users need `on delete cascade` or `on delete set null`.
+
 ## Code conventions
 
 - TypeScript strict; avoid `any`. Use generated `Database` types.
