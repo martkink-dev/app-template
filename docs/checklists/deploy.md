@@ -36,10 +36,12 @@
 
 ### GitHub Actions (database migrations)
 
-- [ ] **Settings → Secrets and variables → Actions:** add the secrets used by
-      the database workflow (Supabase access token, project IDs and database
-      passwords for staging and prod).
-- [ ] Merge a PR and confirm the database workflow runs green.
+- [ ] **Settings → Secrets and variables → Actions → Variables:**
+      `SUPABASE_STAGING_PROJECT_ID`, `SUPABASE_PRODUCTION_PROJECT_ID`.
+- [ ] **Secrets:** `SUPABASE_ACCESS_TOKEN` (Supabase → Account → Access
+      Tokens), `SUPABASE_STAGING_DB_PASSWORD`, `SUPABASE_PRODUCTION_DB_PASSWORD`.
+- [ ] **Actions → Database migrations → Run workflow** once and confirm that
+      both jobs are green.
 
 ## Every change
 
