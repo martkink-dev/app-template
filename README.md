@@ -18,6 +18,10 @@ Zod · ESLint · Prettier · Vercel · GitHub Actions
 
 ## Start a new app from this template
 
+The quick version is below. The full step-by-step guide, including GitHub,
+Supabase cloud and Vercel setup, is in
+[`docs/new-app-guide.md`](docs/new-app-guide.md).
+
 1. On GitHub, open this repository and click **Use this template → Create a new repository**.
 2. Clone the new repository and install dependencies:
 
@@ -110,17 +114,21 @@ Level Security enabled. See `AGENTS.md` for the full rules.
 
 - **`supabase start` fails / Docker errors:** open Docker Desktop and wait
   until it shows _Engine running_. On Windows, run `wsl --update` and restart.
+- **`supabase start` reports a port in use:** another app's local Supabase
+  is running. Run `npx supabase stop` in that app's folder.
 - **`supabase status` shows only the Storage box:** use
   `npx supabase status -o env`.
 - **App fails with an environment variable error:** `.env.local` is missing
   or incomplete. Compare it with `.env.example`.
 
-## Checklists
+More cases are listed in [`docs/new-app-guide.md`](docs/new-app-guide.md#troubleshooting).
 
-- [Start a new app](docs/checklists/new-app.md)
-- [Deploy](docs/checklists/deploy.md)
-- [Security](docs/checklists/security.md)
-- [User management module](docs/modules/user-management.md)
+## Guides and checklists
+
+- [Guide: create a new app from the template](docs/new-app-guide.md)
+- [Checklist: start a new app](docs/checklists/new-app.md)
+- [Checklist: deploy](docs/checklists/deploy.md)
+- [Checklist: security](docs/checklists/security.md)
 
 ## For AI assistants
 
