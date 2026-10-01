@@ -10,48 +10,56 @@ Copy this list into the first issue or PR of the new app and tick items off.
       `main` is protected by discipline only.
 - [ ] Clone the repository and run `npm install`.
 
-## 2. Identity
+## 2. Identity and local environment (script)
 
-- [ ] `package.json`: change `"name"`.
-- [ ] `supabase/config.toml`: change `project_id` (must be unique per app on
-      this computer).
-- [ ] `src/config/site.ts`: change `name`, `description` and `locale`.
-- [ ] `README.md`: replace the template title and description.
-- [ ] `AGENTS.md`: describe what this app does in the **Project** section.
+- [ ] Docker Desktop is running (_Engine running_).
+- [ ] Run the setup script with the app name (kebab-case):
+
+  ```bash
+  npm run setup -- <app> --title "<App Title>" --description "<One sentence>"
+  ```
+
+  It switches to the `chore/project-setup` branch, updates `package.json`,
+  `package-lock.json`, `supabase/config.toml` (`project_id`),
+  `src/config/site.ts`, `README.md` and `AGENTS.md`, starts local Supabase,
+  creates `.env.local`, rebuilds the local database and regenerates the
+  types. It is safe to run again if it stops halfway.
+
+- [ ] The script reports no `app-template` leftovers outside `docs/`.
+- [ ] Check `locale` in `src/config/site.ts` (pass `--locale et` to set it).
+- [ ] `AGENTS.md`: replace the TODO in the **Project** section with who uses
+      the app and the domain terms an AI assistant should know.
+- [ ] `npm run dev` works and the home page opens.
+- [ ] Opening `/dashboard` redirects to `/login?next=/dashboard`.
 
 ## 3. Branding
 
 See [`ui-guidelines.md`](../ui-guidelines.md#5-branding-a-new-app).
 
-- [ ] Choose the brand colour (preview it in Material Theme Builder).
-- [ ] Generate the MD3 scheme:
-      `npm run theme:generate -- --seed "#RRGGBB"` and commit
-      `src/styles/md3-theme.css`.
-- [ ] Choose the font in `src/app/layout.tsx` (or keep Roboto Flex).
+- [ ] Choose the primary colour and paste theme values into
+      `src/app/globals.css` (`:root` and `.dark`).
+- [ ] Choose the font in `src/app/layout.tsx` (or keep Geist).
+- [ ] Choose `--radius` (sharper or rounder corners).
 - [ ] Replace `src/app/favicon.ico`.
 - [ ] Replace the content of `src/app/(marketing)/page.tsx`.
 - [ ] Check light and dark mode, and a 375 px wide screen.
 - [ ] Check text contrast on `primary` buttons in both themes.
 
-## 4. Local environment
+## 4. First pull request
 
-- [ ] Docker Desktop is running (_Engine running_).
-- [ ] `npx supabase start`
-- [ ] Create `.env.local` from `.env.example` and fill it in
-      (`npx supabase status -o env`).
-- [ ] `npx supabase db reset` and `npm run db:types`
-- [ ] `npm run dev` works and the home page opens.
-- [ ] Opening `/dashboard` redirects to `/login?next=/dashboard`.
+- [ ] `npm run check` passes.
+- [ ] Commit `chore: set up project identity`, push `chore/project-setup`
+      and open a pull request.
+- [ ] The **checks** workflow is green. **Squash and merge.**
 
 ## 5. GitHub settings
 
 - [ ] **Settings → General → Pull Requests:** only **Allow squash merging**
       enabled; **Automatically delete head branches** enabled.
-- [ ] Open a first small PR so the **checks** workflow runs once
-      (GitHub can only require a check it has seen).
 - [ ] **Settings → Rules → Rulesets:** create `protect-main` for the default
       branch: restrict deletions, block force pushes, require a pull request
-      (0 approvals when working alone), require status check `checks`.
+      (0 approvals when working alone), require status check `checks`
+      (GitHub can only require a check that has run once, see section 4).
 - [ ] **Settings → Advanced Security:** enable Dependabot alerts and
       Dependabot security updates.
 
