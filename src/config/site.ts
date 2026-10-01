@@ -1,4 +1,4 @@
-import { LayoutDashboard, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, type LucideIcon, Users } from "lucide-react";
 
 /**
  * App identity. Change these values when starting a new app.
@@ -14,9 +14,15 @@ export type NavItem = {
   title: string;
   href: string;
   icon: LucideIcon;
+  /**
+   * Shown only to admins. This only hides the link: the page itself must
+   * still call requireAdmin().
+   */
+  adminOnly?: boolean;
 };
 
 /** Navigation for the signed-in area (src/app/(app)). */
 export const appNav: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Users", href: "/admin/users", icon: Users, adminOnly: true },
 ];

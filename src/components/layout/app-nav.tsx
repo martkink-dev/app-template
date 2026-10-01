@@ -6,19 +6,28 @@ import { usePathname } from "next/navigation";
 import { appNav } from "@/config/site";
 import { cn } from "@/lib/utils";
 
+type AppNavProps = {
+  /** Decided on the server (getCurrentUser); controls adminOnly items. */
+  isAdmin: boolean;
+};
+
 /**
  * Main navigation of the signed-in area. Horizontal on mobile,
  * vertical in the sidebar from the md breakpoint up.
+ *
+ * The items are imported here rather than passed as props, because their
+ * icons are components and cannot be sent from a Server Component.
  */
-export function AppNav() {
+export function AppNav({ isAdmin }: AppNavProps) {
   const pathname = usePathname();
+  const items = appNav.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <nav
       aria-label="Main"
       className="flex gap-1 overflow-x-auto px-2 pb-2 md:flex-col md:pb-4"
     >
-      {appNav.map((item) => {
+      {items.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
