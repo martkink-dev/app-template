@@ -18,25 +18,26 @@ Stack (do not change without an explicit decision from the owner):
 
 ## Commands
 
-| Command                             | Purpose                                       |
-| ----------------------------------- | --------------------------------------------- |
-| `npm run dev`                       | Start the dev server                          |
-| `npm run check`                     | Format check, lint, typecheck, tests, build   |
-| `npm run lint`                      | ESLint                                        |
-| `npm run format`                    | Format all files with Prettier                |
-| `npm run format:check`              | Check formatting (used in CI)                 |
-| `npm run typecheck`                 | Generate Next.js route types and run `tsc`    |
-| `npm run build`                     | Production build                              |
-| `npm run test`                      | Unit and component tests (Vitest)             |
-| `npm run test:watch`                | Vitest in watch mode                          |
-| `npm run test:e2e`                  | E2E tests (Playwright, needs local Supabase)  |
-| `npm run test:db`                   | Database tests (pgTAP, needs local Supabase)  |
-| `npx supabase start`                | Start local Supabase (Docker must be running) |
-| `npx supabase db reset`             | Rebuild local DB from migrations + `seed.sql` |
-| `npm run db:types`                  | Regenerate `src/types/database.types.ts`      |
-| `npx supabase migration new <name>` | Create a new migration file                   |
-| `npm run users:invite-admin`        | Admin invitation link from the terminal       |
-| `npm run users:reset-password`      | Password reset link from the terminal         |
+| Command                             | Purpose                                         |
+| ----------------------------------- | ----------------------------------------------- |
+| `npm run dev`                       | Start the dev server                            |
+| `npm run check`                     | Format check, lint, typecheck, tests, build     |
+| `npm run lint`                      | ESLint                                          |
+| `npm run format`                    | Format all files with Prettier                  |
+| `npm run format:check`              | Check formatting (used in CI)                   |
+| `npm run typecheck`                 | Generate Next.js route types and run `tsc`      |
+| `npm run build`                     | Production build                                |
+| `npm run test`                      | Unit and component tests (Vitest)               |
+| `npm run test:watch`                | Vitest in watch mode                            |
+| `npm run test:e2e`                  | E2E tests (Playwright, needs local Supabase)    |
+| `npm run test:db`                   | Database tests (pgTAP, needs local Supabase)    |
+| `npx supabase start`                | Start local Supabase (Docker must be running)   |
+| `npx supabase db reset`             | Rebuild local DB from migrations + `seed.sql`   |
+| `npm run db:types`                  | Regenerate `src/types/database.types.ts`        |
+| `npx supabase migration new <name>` | Create a new migration file                     |
+| `npm run users:invite-admin`        | Admin invitation link from the terminal         |
+| `npm run users:reset-password`      | Password reset link from the terminal           |
+| `npm run setup`                     | Set up identity (new app) and local environment |
 
 Before finishing any task, `npm run check` must pass
 (format check, lint, typecheck, tests, build).
