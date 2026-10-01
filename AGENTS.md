@@ -35,9 +35,8 @@ Stack (do not change without an explicit decision from the owner):
 | `npm run db:types`                  | Regenerate `src/types/database.types.ts`      |
 | `npx supabase migration new <name>` | Create a new migration file                   |
 
-Before finishing any task, all of these must pass:
-`npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run test`,
-`npm run build`.
+Before finishing any task, `npm run check` must pass
+(format check, lint, typecheck, tests, build).
 If the task changes the database, `npm run test:db` must also pass.
 
 ## Project structure
@@ -46,9 +45,12 @@ If the task changes the database, `npm run test:db` must also pass.
 src/
   app/                  Routes, layouts, pages (App Router)
   components/ui/        shadcn/ui components (add with `npx shadcn@latest add`)
+  components/layout/    App shell: Container, PageHeader, EmptyState, nav
+  config/site.ts        App name, description, locale, navigation
   lib/supabase/         Supabase clients (see below)
   lib/validations/      Zod schemas
   lib/env.ts            Validated public environment variables
+  lib/utils.ts          cn() helper for class names
   types/                Generated database types
   proxy.ts              Next.js proxy: session refresh + route protection
 e2e/                    Playwright E2E tests
@@ -127,6 +129,17 @@ supabase/
   unless intentionally customising a shadcn component.
 - Code, file names and comments in English.
 - Keep solutions simple; add complexity only when it is needed.
+
+## UI rules
+
+Read `docs/ui-guidelines.md` before building UI.
+
+- Use semantic colour classes only (`bg-primary`, `text-muted-foreground`).
+  Never hard-code colours (`bg-blue-600`, `bg-[#333]`).
+- Every page starts with `PageHeader`; empty lists use `EmptyState`.
+- Add shadcn components with `npx shadcn@latest add <name>`.
+- Signed-in pages go in `src/app/(app)/` and are added to `appNav`.
+- Mobile first; check layouts at 375 px width.
 
 ## Git workflow
 
