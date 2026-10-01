@@ -47,12 +47,13 @@ Go through this list before the first production release and then regularly
 - [ ] The `next` redirect parameter is only accepted when it is a relative path
       starting with `/` (`safeRedirectPath`).
 - [ ] Auth Redirect URLs contain only your own domains.
-- [ ] **Public sign-up is off** in staging and prod
-      (Authentication → Sign In / Providers → _Allow new users to sign up_).
 - [ ] Password settings in staging and prod match
       `src/lib/validations/password.ts` (minimum 12 characters, lowercase,
       uppercase, digits and symbols).
 - [ ] Optional (paid plans): leaked password protection is enabled.
+- [ ] **Public sign-up is off** everywhere: `enable_signup = false` in
+      `supabase/config.toml`, and in staging and prod
+      (Authentication → Sign In / Providers → _Allow new users to sign up_).
 
 ## User management
 
