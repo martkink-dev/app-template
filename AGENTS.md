@@ -21,6 +21,7 @@ Stack (do not change without an explicit decision from the owner):
 | Command                             | Purpose                                       |
 | ----------------------------------- | --------------------------------------------- |
 | `npm run dev`                       | Start the dev server                          |
+| `npm run check`                     | Format check, lint, typecheck, tests, build   |
 | `npm run lint`                      | ESLint                                        |
 | `npm run format`                    | Format all files with Prettier                |
 | `npm run format:check`              | Check formatting (used in CI)                 |
@@ -28,32 +29,41 @@ Stack (do not change without an explicit decision from the owner):
 | `npm run build`                     | Production build                              |
 | `npm run test`                      | Unit and component tests (Vitest)             |
 | `npm run test:watch`                | Vitest in watch mode                          |
-| `npm run test:e2e`                  | E2E tests (Playwright, starts the dev server) |
+| `npm run test:e2e`                  | E2E tests (Playwright, needs local Supabase)  |
 | `npm run test:db`                   | Database tests (pgTAP, needs local Supabase)  |
 | `npx supabase start`                | Start local Supabase (Docker must be running) |
 | `npx supabase db reset`             | Rebuild local DB from migrations + `seed.sql` |
 | `npm run db:types`                  | Regenerate `src/types/database.types.ts`      |
 | `npx supabase migration new <name>` | Create a new migration file                   |
+| `npm run users:invite-admin`        | Admin invitation link from the terminal       |
+| `npm run users:reset-password`      | Password reset link from the terminal         |
 
 Before finishing any task, `npm run check` must pass
 (format check, lint, typecheck, tests, build).
 If the task changes the database, `npm run test:db` must also pass.
+If the task changes pages or auth flows, `npm run test:e2e` must also pass.
 
 ## Project structure
 
 ```
 src/
-  app/                  Routes, layouts, pages (App Router)
+  app/(marketing)/      Public pages (header + footer)
+  app/(app)/            Signed-in area (app shell); admin pages in admin/
+  app/(auth)/           Signed-out pages: login, invite, reset-password
   components/ui/        shadcn/ui components (add with `npx shadcn@latest add`)
   components/layout/    App shell: Container, PageHeader, EmptyState, nav
   config/site.ts        App name, description, locale, navigation
+  lib/auth/             Guards (requireUser, requireAdmin), sign-in actions
   lib/supabase/         Supabase clients (see below)
+  lib/users/            User management: config, link tokens, lookups
   lib/validations/      Zod schemas
   lib/env.ts            Validated public environment variables
   lib/utils.ts          cn() helper for class names
   types/                Generated database types
   proxy.ts              Next.js proxy: session refresh + route protection
-e2e/                    Playwright E2E tests
+e2e/                    Playwright E2E tests; helpers in e2e/support/
+scripts/                Terminal tools (admin invitation, password reset)
+docs/                   Guides, checklists, module docs
 supabase/
   migrations/           SQL migrations (the only way to change the schema)
   tests/database/       pgTAP database tests (RLS policies)
@@ -72,7 +82,10 @@ supabase/
 3. Functions use `set search_path = ''` and fully qualified names (`public.x`).
    Use `security definer` only when required, and explain why in a comment.
 4. After adding a migration, run `npx supabase db reset` and `npm run db:types`,
-   and commit the regenerated types together with the migration.
+   and commit the regenerated types together with the migration. CI
+   type-checks against the committed file, so forgetting this fails the build.
+   Create migrations with `npx supabase migration new`; a file without the
+   timestamp prefix is silently ignored.
 5. Reuse `public.set_updated_at()` for `updated_at` columns.
 
 ## Testing
@@ -83,6 +96,13 @@ supabase/
 - Database tests: `supabase/tests/database/*.test.sql` (pgTAP).
   Every migration that creates a table must add `<table>.test.sql` that
   checks its RLS policies (copy the pattern in `profiles.test.sql`).
+- `rls_enabled.test.sql` fails if any table in `public` has RLS disabled.
+  Never weaken or delete this test.
+- pgTAP tests insert into `auth.users` directly. Supabase Auth behaves
+  differently (for example it writes `app_metadata` after the insert), so
+  flows that depend on Auth need an E2E test as well.
+- E2E tests create their own users with `e2e/support/users.ts` (secret key,
+  local Supabase only) and delete them afterwards.
 - Add or update tests with every feature or bug fix.
 
 ## Supabase clients: which one to use
@@ -91,10 +111,12 @@ supabase/
 | ------------------------ | ----------------------------------------- | ----------- | -------- |
 | `lib/supabase/client.ts` | Client Components (`"use client"`)        | publishable | applies  |
 | `lib/supabase/server.ts` | Server Components, Server Actions, Routes | publishable | applies  |
-| `lib/supabase/admin.ts`  | Trusted server code only (webhooks, cron) | **secret**  | bypassed |
+| `lib/supabase/admin.ts`  | Trusted server code only (see below)      | **secret**  | bypassed |
 
-- Default to `server.ts`. Use `admin.ts` only when there is no user context,
-  and justify it in a code comment.
+- Default to `server.ts`. Use `admin.ts` only when there is no user context
+  (webhooks, cron, a visitor opening an invitation or reset link), or after
+  `requireAdmin()` when the Auth admin API or protected columns require it.
+  Justify every use in a code comment.
 - Create a new server client per request; never store it in a module variable.
 - To check auth on the server, use `supabase.auth.getClaims()`.
   Never trust `getSession()` in server code.
@@ -118,15 +140,27 @@ supabase/
 - Protect pages and Server Actions with `requireUser()` or `requireAdmin()`
   from `src/lib/auth/guards.ts`. In RLS use `(select public.is_admin())`.
 - Never let users write `profiles.role`, `status` or `email`.
+- `public.handle_new_user()` creates every profile as `member`. Roles are set
+  by trusted server code after the user is created. Never read roles from
+  `app_metadata`: Supabase Auth writes it after the insert trigger has run.
 - New tables referencing users need `on delete cascade` or `on delete set null`.
+- Users change their own name and password on `/account`; changing a
+  password requires the current one.
 
 ## Authentication model
 
 - Accounts are created ONLY from invitations (`/invite/<token>`).
   Never add a sign-up page, a `signUp()` call or a "Create account" link.
-- Public sign-up is disabled in `supabase/config.toml` and must stay
-  disabled in the hosted projects.
-- Signed-out pages (`/login`, `/invite`) live in `src/app/(auth)/`.
+- Public sign-up is disabled by `[auth] enable_signup = false` in
+  `supabase/config.toml` and must stay disabled in the hosted projects.
+  `[auth.email] enable_signup` must stay `true`: despite its name it switches
+  the whole email provider, including password sign-in.
+- The app sends no emails. Invitations and password resets are one-time
+  links that an admin sends: only a SHA-256 hash of the token is stored, the
+  link expires and is claimed atomically. Follow the same pattern for any
+  new link type. Keep Supabase "Secure password change" off (it needs email).
+- Signed-out pages (`/login`, `/invite`, `/reset-password`) live in
+  `src/app/(auth)/`; their paths are in `PUBLIC_PATHS`.
 - Admin-only pages live under `src/app/(app)/admin/`, call `requireAdmin()`
   and use `adminOnly: true` in `appNav`.
 
@@ -159,4 +193,5 @@ Read `docs/ui-guidelines.md` before building UI.
 - `main` is protected. Work on a branch: `feat/...`, `fix/...`, `chore/...`,
   `docs/...`, `ci/...`.
 - Commits and PR titles use Conventional Commits, e.g. `feat(auth): add login page`.
-- PRs are merged with squash merge after CI passes.
+- PRs are merged with squash merge after the required checks pass:
+  `checks` and `integration`.

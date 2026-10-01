@@ -38,9 +38,12 @@ user's row. Works like an invitation: one-time link
 (`PASSWORD_RESET_TTL_HOURS`), only the hash is stored in
 `public.password_resets`, a new link replaces the previous one. Admins cannot
 create a link for themselves. If no admin can sign in:
-`npm run users:reset-password -- you@example.com`. Resetting does not end the
-user's other sessions; deactivate the user first if the account may be
-compromised.
+`npm run users:reset-password -- you@example.com`. Resetting signs the user out on other devices.
+
+**Account.** `/account` lets every user change their display name and their
+password. Changing the password needs the current one and signs the user out
+on other devices; so does resetting it with a link. Access tokens already
+issued stay valid until they expire (1 hour by default).
 
 **Deactivate.** Bans the user in Supabase Auth (no sign-in, no session
 refresh) and sets `profiles.status = 'inactive'`. `getCurrentUser()` checks
