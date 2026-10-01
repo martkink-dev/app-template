@@ -12,21 +12,21 @@ Expected time: 60–90 minutes the first time, about 30 minutes once routine.
 
 ## Overview
 
-| Phase | What happens                               | Result                                   |
-| ----- | ------------------------------------------ | ---------------------------------------- |
-| 0     | Prerequisites (once per computer)          | Tools and accounts ready                 |
-| 1     | Choose the app name                        | One name used everywhere                 |
-| 2     | Create the repository from the template    | New GitHub repo, cloned locally          |
-| 3     | Give the app its identity                  | No `app-template` leftovers              |
-| 4     | Start the local environment                | App + local Supabase running             |
-| 5     | First pull request                         | CI has run once, identity is on `main`   |
-| 6     | Protect the repository                     | `main` protected, Dependabot on          |
-| 7     | Create Supabase cloud projects             | Staging and production databases         |
-| 8     | Connect GitHub Actions to Supabase         | Migrations deploy automatically          |
-| 9     | Deploy to Vercel                           | Preview and production URLs              |
-| 10    | Configure Supabase Auth URLs               | Sign-in emails point to the right place  |
-| 11    | Verify all three environments              | Everything works end to end              |
-| 12    | Prepare for the first feature              | Ready to build                           |
+| Phase | What happens                            | Result                                  |
+| ----- | --------------------------------------- | --------------------------------------- |
+| 0     | Prerequisites (once per computer)       | Tools and accounts ready                |
+| 1     | Choose the app name                     | One name used everywhere                |
+| 2     | Create the repository from the template | New GitHub repo, cloned locally         |
+| 3     | Give the app its identity               | No `app-template` leftovers             |
+| 4     | Start the local environment             | App + local Supabase running            |
+| 5     | First pull request                      | CI has run once, identity is on `main`  |
+| 6     | Protect the repository                  | `main` protected, Dependabot on         |
+| 7     | Create Supabase cloud projects          | Staging and production databases        |
+| 8     | Connect GitHub Actions to Supabase      | Migrations deploy automatically         |
+| 9     | Deploy to Vercel                        | Preview and production URLs             |
+| 10    | Configure Supabase Auth URLs            | Sign-in emails point to the right place |
+| 11    | Verify all three environments           | Everything works end to end             |
+| 12    | Prepare for the first feature           | Ready to build                          |
 
 Order matters in phases 7–10: the databases must exist and have the schema
 before the app is deployed, and the Auth URLs can only be set once Vercel has
@@ -64,14 +64,14 @@ Pick one short name in **kebab-case**, for example `invoice-tracker`.
 It is used in all of these places, and keeping them identical saves confusion
 later:
 
-| Where                            | Value                    |
-| -------------------------------- | ------------------------ |
-| GitHub repository                | `invoice-tracker`        |
-| `package.json` → `name`          | `invoice-tracker`        |
-| `supabase/config.toml` → `project_id` | `invoice-tracker`   |
-| Supabase staging project         | `invoice-tracker-staging`|
-| Supabase production project      | `invoice-tracker-prod`   |
-| Vercel project                   | `invoice-tracker`        |
+| Where                                 | Value                     |
+| ------------------------------------- | ------------------------- |
+| GitHub repository                     | `invoice-tracker`         |
+| `package.json` → `name`               | `invoice-tracker`         |
+| `supabase/config.toml` → `project_id` | `invoice-tracker`         |
+| Supabase staging project              | `invoice-tracker-staging` |
+| Supabase production project           | `invoice-tracker-prod`    |
+| Vercel project                        | `invoice-tracker`         |
 
 In the rest of this guide `<app>` means this name and `<user>` means your
 GitHub user or organisation.
@@ -187,11 +187,11 @@ npx supabase status -o env
 
 Fill in `.env.local`:
 
-| `.env.local` variable                   | Value from `status -o env`          |
-| --------------------------------------- | ----------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`              | `API_URL`                           |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`  | `PUBLISHABLE_KEY` (or `ANON_KEY`)   |
-| `SUPABASE_SECRET_KEY`                   | `SECRET_KEY` (or `SERVICE_ROLE_KEY`) — only needed if the app uses `admin.ts` |
+| `.env.local` variable                  | Value from `status -o env`                                                    |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | `API_URL`                                                                     |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `PUBLISHABLE_KEY` (or `ANON_KEY`)                                             |
+| `SUPABASE_SECRET_KEY`                  | `SECRET_KEY` (or `SERVICE_ROLE_KEY`) — only needed if the app uses `admin.ts` |
 
 `.env.local` is git-ignored. Never commit it.
 
@@ -319,11 +319,11 @@ share data.
 
 In the Supabase dashboard, **New project**, twice:
 
-| Setting           | Staging                 | Production           |
-| ----------------- | ----------------------- | -------------------- |
-| Name              | `<app>-staging`         | `<app>-prod`         |
+| Setting           | Staging                            | Production                         |
+| ----------------- | ---------------------------------- | ---------------------------------- |
+| Name              | `<app>-staging`                    | `<app>-prod`                       |
 | Database password | Generate, save in password manager | Generate, save in password manager |
-| Region            | Central EU (Frankfurt)  | Central EU (Frankfurt) |
+| Region            | Central EU (Frankfurt)             | Central EU (Frankfurt)             |
 
 Use the same region for both, close to your users.
 
@@ -335,12 +335,12 @@ Use the same region for both, close to your users.
 For **each** project, write down (in the password manager, next to the DB
 password):
 
-| Value             | Where in the dashboard                         |
-| ----------------- | ---------------------------------------------- |
-| Project ID (ref)  | Project Settings → General                     |
-| Project URL       | `https://<project-ref>.supabase.co`            |
-| Publishable key   | Project Settings → API Keys (`sb_publishable_…`) |
-| Secret key        | Project Settings → API Keys (`sb_secret_…`)    |
+| Value            | Where in the dashboard                           |
+| ---------------- | ------------------------------------------------ |
+| Project ID (ref) | Project Settings → General                       |
+| Project URL      | `https://<project-ref>.supabase.co`              |
+| Publishable key  | Project Settings → API Keys (`sb_publishable_…`) |
+| Secret key       | Project Settings → API Keys (`sb_secret_…`)      |
 
 Do **not** create tables or policies in the dashboard. The schema arrives via
 GitHub Actions in Phase 8.
@@ -368,18 +368,18 @@ Repository → **Settings → Secrets and variables → Actions**.
 
 **Variables** tab (not secret, visible in logs):
 
-| Name                              | Value                    |
-| --------------------------------- | ------------------------ |
-| `SUPABASE_STAGING_PROJECT_ID`     | staging Project ID       |
-| `SUPABASE_PRODUCTION_PROJECT_ID`  | production Project ID    |
+| Name                             | Value                 |
+| -------------------------------- | --------------------- |
+| `SUPABASE_STAGING_PROJECT_ID`    | staging Project ID    |
+| `SUPABASE_PRODUCTION_PROJECT_ID` | production Project ID |
 
 **Secrets** tab:
 
-| Name                              | Value                    |
-| --------------------------------- | ------------------------ |
-| `SUPABASE_ACCESS_TOKEN`           | token from 8.1           |
-| `SUPABASE_STAGING_DB_PASSWORD`    | staging DB password      |
-| `SUPABASE_PRODUCTION_DB_PASSWORD` | production DB password   |
+| Name                              | Value                  |
+| --------------------------------- | ---------------------- |
+| `SUPABASE_ACCESS_TOKEN`           | token from 8.1         |
+| `SUPABASE_STAGING_DB_PASSWORD`    | staging DB password    |
+| `SUPABASE_PRODUCTION_DB_PASSWORD` | production DB password |
 
 ### 8.3 Apply the existing migrations
 
@@ -408,11 +408,11 @@ detected as Next.js; leave the build settings at their defaults.
 Before clicking **Deploy**, open **Environment Variables** and add each
 variable **per environment**:
 
-| Variable                               | Production         | Preview            | Development |
-| -------------------------------------- | ------------------ | ------------------ | ----------- |
-| `NEXT_PUBLIC_SUPABASE_URL`             | prod Project URL   | staging Project URL | —          |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | prod publishable   | staging publishable | —          |
-| `SUPABASE_SECRET_KEY` (only if `admin.ts` is used) | prod secret, **Sensitive** | staging secret, **Sensitive** | — |
+| Variable                                           | Production                 | Preview                       | Development |
+| -------------------------------------------------- | -------------------------- | ----------------------------- | ----------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                         | prod Project URL           | staging Project URL           | —           |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`             | prod publishable           | staging publishable           | —           |
+| `SUPABASE_SECRET_KEY` (only if `admin.ts` is used) | prod secret, **Sensitive** | staging secret, **Sensitive** | —           |
 
 Development stays empty: local development uses `.env.local`.
 
@@ -536,15 +536,15 @@ production. Details: [`checklists/deploy.md`](./checklists/deploy.md).
 
 ## Troubleshooting
 
-| Symptom | Likely cause and fix |
-| ------- | -------------------- |
-| `supabase start` fails with Docker errors | Docker Desktop is not running. Wait for _Engine running_. On Windows run `wsl --update` and restart. |
-| `supabase start` reports a port in use | Another app's local Supabase is running. Run `npx supabase stop` in that app's folder. |
-| Local database of another app disappeared | Both apps have the same `project_id`. Give each app a unique one (Phase 3). |
-| App crashes with an environment variable error | `.env.local` is missing or incomplete (locally) or the variable is missing for that environment (Vercel). Compare with `.env.example`. |
-| Vercel build passes but the app uses the wrong database | Production and Preview variables swapped, or not redeployed after changing a `NEXT_PUBLIC_` value. |
-| Sign-in email links point to `localhost` | Site URL / Redirect URLs not set in that Supabase project (Phase 10). |
-| Sign-in loop locally | Mixing `localhost` and `127.0.0.1`. Use the host from `site_url`. |
-| `db push` fails: authentication | Wrong DB password secret or expired access token. |
-| `db push` fails: migration history mismatch | Someone changed the cloud schema in the dashboard, or a merged migration was edited. Fix with a new migration; never edit merged ones. |
-| Cannot select `checks` in the ruleset | CI has not run yet in this repository. Finish Phase 5 first. |
+| Symptom                                                 | Likely cause and fix                                                                                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase start` fails with Docker errors               | Docker Desktop is not running. Wait for _Engine running_. On Windows run `wsl --update` and restart.                                   |
+| `supabase start` reports a port in use                  | Another app's local Supabase is running. Run `npx supabase stop` in that app's folder.                                                 |
+| Local database of another app disappeared               | Both apps have the same `project_id`. Give each app a unique one (Phase 3).                                                            |
+| App crashes with an environment variable error          | `.env.local` is missing or incomplete (locally) or the variable is missing for that environment (Vercel). Compare with `.env.example`. |
+| Vercel build passes but the app uses the wrong database | Production and Preview variables swapped, or not redeployed after changing a `NEXT_PUBLIC_` value.                                     |
+| Sign-in email links point to `localhost`                | Site URL / Redirect URLs not set in that Supabase project (Phase 10).                                                                  |
+| Sign-in loop locally                                    | Mixing `localhost` and `127.0.0.1`. Use the host from `site_url`.                                                                      |
+| `db push` fails: authentication                         | Wrong DB password secret or expired access token.                                                                                      |
+| `db push` fails: migration history mismatch             | Someone changed the cloud schema in the dashboard, or a merged migration was edited. Fix with a new migration; never edit merged ones. |
+| Cannot select `checks` in the ruleset                   | CI has not run yet in this repository. Finish Phase 5 first.                                                                           |
