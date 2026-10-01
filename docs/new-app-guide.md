@@ -12,26 +12,75 @@ Expected time: 60–90 minutes the first time, about 30 minutes once routine.
 
 ## Overview
 
-| Phase | What happens                            | Result                                 |
-| ----- | --------------------------------------- | -------------------------------------- |
-| 0     | Prerequisites (once per computer)       | Tools and accounts ready               |
-| 1     | Choose the app name                     | One name used everywhere               |
-| 2     | Create the repository from the template | New GitHub repo, cloned locally        |
-| 3     | Give the app its identity               | No `app-template` leftovers            |
-| 4     | Start the local environment             | App + local Supabase running           |
-| 5     | First pull request                      | CI has run once, identity is on `main` |
-| 6     | Protect the repository                  | `main` protected, Dependabot on        |
-| 7     | Create Supabase cloud projects          | Staging and production databases       |
-| 8     | Connect GitHub Actions to Supabase      | Migrations deploy automatically        |
-| 9     | Deploy to Vercel                        | Preview and production URLs            |
-| 10    | Configure Supabase Auth, first admin    | Sign-up off, an admin can sign in      |
-| 11    | Verify all three environments           | Everything works end to end            |
-| 12    | Prepare for the first feature           | Ready to build                         |
+| Phase | What happens                            | Result                                  |
+| ----- | --------------------------------------- | --------------------------------------- |
+| 0     | Prerequisites (once per computer)       | Tools and accounts ready                |
+| 1     | Choose the app name                     | One name used everywhere                |
+| 2     | Create the repository from the template | New GitHub repo, cloned locally         |
+| 3     | Give the app its identity               | No `app-template` leftovers             |
+| 4     | Start the local environment             | App + local Supabase running            |
+| 5     | First pull request                      | CI has run once, identity is on `main`  |
+| 6     | Protect the repository                  | `main` protected, Dependabot on         |
+| 7     | Create Supabase cloud projects          | Staging and production databases        |
+| 8     | Connect GitHub Actions to Supabase      | Migrations deploy automatically         |
+| 9     | Deploy to Vercel                        | Preview and production URLs             |
+| 10    | Configure Supabase Auth URLs            | Sign-in emails point to the right place |
+| 11    | Verify all three environments           | Everything works end to end             |
+| 12    | Prepare for the first feature           | Ready to build                          |
+
+Phases 2–6 are done by one command, see [Fast path](#fast-path-phases-26-with-one-command).
 
 Order matters in phases 7–10: the databases must exist and have the schema
-before the app is deployed, the Auth URLs can only be set once Vercel has
-given you the URLs, and the first admin can only be invited once the schema
-exists.
+before the app is deployed, and the Auth URLs can only be set once Vercel has
+given you the URLs.
+
+---
+
+## Fast path: phases 2–6 with one command
+
+Once the prerequisites (Phase 0) are in place and the name is chosen
+(Phase 1), run in the **template** folder:
+
+```bash
+git switch main
+git pull
+node scripts/new-app.mjs <app> --private --title "<App Title>" --description "<One sentence about the app>"
+```
+
+Use `--public` instead of `--private` if the code can be public (see 2.1
+for what this means for branch protection). Other options: `--locale et`,
+`--owner <org>` (default: the template's owner) and `--merge`, which
+squash-merges the first pull request when CI is green. Without `--merge`
+you review and merge it yourself. `node scripts/new-app.mjs --help` lists
+them all.
+
+The script first checks that the GitHub CLI is signed in, Git has a user,
+Docker is running and the template is marked as a template on GitHub.
+Nothing is created before these checks pass. Then:
+
+| Phase | What the script does                                                                                                             |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 2     | Creates `<user>/<app>` from the template and clones it next to the template folder (`..\<app>`).                                 |
+| 3–4   | Runs `npm ci` and `scripts/setup.mjs`: identity, local Supabase, `.env.local`, database, types.                                  |
+| 5     | Commits `chore: set up project identity`, pushes `chore/project-setup` and opens the pull request.                               |
+| 6     | Sets the pull request settings (6.1), turns on Dependabot (6.3), waits for CI and then creates the `protect-main` ruleset (6.2). |
+
+The ruleset comes from `.github/rulesets/protect-main.json`, so the rules are
+version-controlled and the same in every app. It is created after CI has run
+once because GitHub only requires checks it has seen.
+
+The script is safe to run again with the same arguments: an existing
+repository, folder, commit, pull request or ruleset is reused. If it stops,
+fix the cause it prints and run it again.
+
+Afterwards, continue with the hand-written parts: merge the pull request if
+you did not use `--merge`, replace the TODO in `AGENTS.md` and go on with
+Phase 7. Phases 2–6 below explain what the script did, and how to do each
+step by hand.
+
+> On Windows PowerShell, pass options with `node scripts/... --option`
+> rather than `npm run ... -- --option`: PowerShell can drop the `--`, and
+> the options then never reach the script.
 
 ---
 
@@ -55,7 +104,9 @@ Accounts (all with two-factor authentication on):
 - Supabase
 - Vercel (sign in with GitHub so it can see your repositories)
 
-Optional: the GitHub CLI (`gh`) for creating repos and PRs from the terminal.
+For the fast path: the **GitHub CLI** (`gh`), signed in once with
+`gh auth login`. Check: `gh auth status`. Without it, follow phases 2–6 by
+hand.
 
 ---
 
@@ -119,7 +170,8 @@ When VS Code opens, accept **Install recommended extensions**.
 
 ## Phase 3 — Give the app its identity
 
-The setup script does this phase and most of Phase 4 in one run. It works on
+`scripts/new-app.mjs` runs the setup script for you. By hand, the setup
+script does this phase and most of Phase 4 in one run. It works on
 a branch, which becomes the first pull request (Phase 5) and makes CI run for
 the first time.
 
@@ -127,14 +179,14 @@ Make sure Docker Desktop shows _Engine running_, then run in the repository
 root:
 
 ```bash
-npm run setup -- <app> --title "<App Title>" --description "<One sentence about the app>"
+node scripts/setup.mjs <app> --title "<App Title>" --description "<One sentence about the app>"
 ```
 
 Without `--title` and `--description` the script asks for them; the default
 title comes from the app name (`invoice-tracker` → `Invoice Tracker`).
 Other options: `--locale et` sets the `<html lang>` value, `--skip-local`
-changes only the files and skips Docker and Supabase. `npm run setup -- --help`
-lists them all.
+changes only the files and skips Docker and Supabase.
+`node scripts/setup.mjs --help` lists them all.
 
 The script:
 
@@ -180,7 +232,8 @@ The setup script has already done 4.1–4.3. This section explains what it did,
 and how to do the same by hand when needed.
 
 A new developer on an existing app runs the same script without a name:
-`npm run setup` (add `-- --reset` to rebuild the local database).
+`npm run setup` (or `node scripts/setup.mjs --reset` to also rebuild the
+local database).
 
 ### 4.1 Start local Supabase
 
@@ -246,21 +299,11 @@ Verify:
 - [ ] Opening `/dashboard` redirects to `/login?next=/dashboard`.
 - [ ] Supabase Studio opens at <http://127.0.0.1:54323> and the `profiles`
       table exists.
-- [ ] Create the first admin. There is no sign-up page: accounts are
-      created only from invitations.
-
-  ```bash
-  npm run users:invite-admin -- you@example.com http://127.0.0.1:3000
-  ```
-
-  Open the printed link, set a password and check that you land on
-  `/dashboard` and that **Users** appears in the navigation. A row with
-  `role = admin` appears in `profiles` (created by the
-  `on_auth_user_created` trigger).
-
-- [ ] In `/admin/users`, invite a test member, open the link in a private
-      window and set a password. The member does not see **Users** and gets
-      a 404 on `/admin/users`. Delete the test member afterwards.
+- [ ] Sign-in works with a test user. If there is no sign-up page yet,
+      create one in Studio → **Authentication → Add user**. Check that a row
+      appeared in `profiles` (created by the `on_auth_user_created` trigger).
+      Emails sent locally (for example magic links) appear in the local inbox;
+      `npx supabase status` shows its URL.
 
 > Tip: open the app on the same host as `site_url` in
 > `supabase/config.toml` (`127.0.0.1`, not `localhost`). Auth cookies and
@@ -270,15 +313,20 @@ Verify:
 ### 4.5 Run the same checks as CI
 
 ```bash
-npm run check
+npm run lint
+npm run format:check
+npm run typecheck
+npm run build
 ```
 
-This runs the format check, lint, typecheck and build, the same as CI.
-If the format check fails, run `npm run format` and commit the result.
+If `format:check` fails, run `npm run format` and commit the result.
 
 ---
 
 ## Phase 5 — First pull request
+
+`scripts/new-app.mjs` commits, pushes and opens this pull request; with
+`--merge` it also merges it. By hand:
 
 ```bash
 git add -A
@@ -289,8 +337,7 @@ git push -u origin chore/project-setup
 On GitHub, open a pull request with the title
 `chore: set up project identity` and fill in the PR template.
 
-- The **CI** workflow runs two jobs, **checks** and **integration**; both
-  must turn green.
+- The **CI → checks** job runs and must turn green.
 - The **Database migrations** workflow does not run (it only runs on `main`
   when migrations change, and it skips itself until the Supabase variables
   are set in Phase 8).
@@ -308,6 +355,9 @@ run at least once in the repository.
 ---
 
 ## Phase 6 — Protect the repository
+
+`scripts/new-app.mjs` does 6.1–6.3 through the GitHub API. Check them once
+in the settings; by hand:
 
 ### 6.1 Pull request settings
 
@@ -333,7 +383,10 @@ Conventional Commit per PR.
   - [ ] Block force pushes
   - [ ] Require a pull request before merging — required approvals: **0**
         when you work alone (otherwise you could never merge your own PRs)
-  - [ ] Require status checks to pass — add **`checks`** and **`integration`**
+  - [ ] Require status checks to pass — add **`checks`**
+
+The same rules are stored in `.github/rulesets/protect-main.json`. Instead of
+clicking, you can import that file: **New ruleset → Import a ruleset**.
 
 Save. From now on nothing reaches `main` without a PR and green CI.
 
@@ -381,8 +434,8 @@ password):
 Do **not** create tables or policies in the dashboard. The schema arrives via
 GitHub Actions in Phase 8.
 
-> Dashboard **settings** (Auth URLs, sign-up, password policy) are
-> configuration, not schema, and are set in the dashboard. The "migrations only" rule applies to
+> Dashboard **settings** (Auth URLs, email, SMTP) are configuration, not
+> schema, and are set in the dashboard. The "migrations only" rule applies to
 > tables, columns, policies, functions, triggers and storage policies.
 
 ---
@@ -425,7 +478,7 @@ Repository → **Settings → Secrets and variables → Actions**.
 - [ ] **Push to production** is green.
 
 Check in each Supabase project (Table Editor, read only) that the `profiles`
-and `invitations` tables exist.
+table exists.
 
 If the workflow is started from any branch other than `main`, only staging is
 updated. Production only ever receives migrations from `main`.
@@ -444,16 +497,13 @@ detected as Next.js; leave the build settings at their defaults.
 Before clicking **Deploy**, open **Environment Variables** and add each
 variable **per environment**:
 
-| Variable                               | Production                 | Preview                       | Development |
-| -------------------------------------- | -------------------------- | ----------------------------- | ----------- |
-| `NEXT_PUBLIC_SUPABASE_URL`             | prod Project URL           | staging Project URL           | —           |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | prod publishable           | staging publishable           | —           |
-| `SUPABASE_SECRET_KEY`                  | prod secret, **Sensitive** | staging secret, **Sensitive** | —           |
+| Variable                                           | Production                 | Preview                       | Development |
+| -------------------------------------------------- | -------------------------- | ----------------------------- | ----------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                         | prod Project URL           | staging Project URL           | —           |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`             | prod publishable           | staging publishable           | —           |
+| `SUPABASE_SECRET_KEY` (only if `admin.ts` is used) | prod secret, **Sensitive** | staging secret, **Sensitive** | —           |
 
 Development stays empty: local development uses `.env.local`.
-
-`SUPABASE_SECRET_KEY` is required: accepting invitations and deactivating or
-deleting users use it on the server. Never prefix it with `NEXT_PUBLIC_`.
 
 `NEXT_PUBLIC_` values are baked into the build. After changing one, redeploy.
 
@@ -472,10 +522,10 @@ region is in the USA, which adds latency to every database call.
 
 ---
 
-## Phase 10 — Configure Supabase Auth and the first admin
+## Phase 10 — Configure Supabase Auth URLs
 
-Auth settings are not part of migrations, and `supabase/config.toml` only
-affects the local environment. Set them in **both** cloud projects.
+Without this, sign-in and confirmation emails send users to the wrong place
+(often `localhost`).
 
 ### 10.1 Production project (`<app>-prod`)
 
@@ -484,24 +534,13 @@ affects the local environment. Set them in **both** cloud projects.
 - Site URL: `https://<app>.vercel.app` (or your custom domain)
 - Redirect URLs: `https://<app>.vercel.app/**` — production domains only
 
-**Authentication → Sign In / Providers**:
+**Authentication → Sign In / Providers → Email**:
 
-- [ ] **Allow new users to sign up**: **off**. This is the important one. The
-      sign-up API is public: anyone who knows the project URL and the
-      publishable key (both are visible in the browser) could otherwise create
-      an account without an invitation.
-- [ ] **Email → Confirm email**: may stay on. Invited users are created as
-      already confirmed.
+- [ ] **Confirm email**: on.
 
-**Authentication → Password settings** (must match
-`src/lib/validations/password.ts`):
-
-- [ ] Minimum length: **12**
-- [ ] Required characters: **lowercase, uppercase letters, digits and
-      symbols**
-
-No SMTP provider is needed: the app sends no emails. An admin copies the
-invitation link and sends it through any channel.
+**Custom SMTP** (Authentication → Emails → SMTP Settings): Supabase's
+built-in email sender is meant for testing and is heavily rate-limited. Set
+up a real SMTP provider before real users sign up.
 
 ### 10.2 Staging project (`<app>-staging`)
 
@@ -513,24 +552,6 @@ invitation link and sends it through any channel.
 This wildcard matches all preview deployments of your Vercel team and nothing
 else.
 
-Set **Sign In / Providers** and **Password settings** exactly as in 10.1.
-
-### 10.3 First admin (staging, then production)
-
-1. Create a temporary file `.env.bootstrap.local` with that project's
-   `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`.
-2. Create the invitation, using the URL where the app runs for that project
-   (a preview URL for staging, the production URL for production):
-
-   ```bash
-   node --env-file=.env.bootstrap.local scripts/invite-admin.mjs you@example.com https://<app>.vercel.app
-   ```
-
-3. **Delete `.env.bootstrap.local`.**
-4. Open the printed link and set a password.
-
-The same script is the way back in if no admin can sign in.
-
 ---
 
 ## Phase 11 — Verify all three environments
@@ -540,11 +561,9 @@ The same script is the way back in if no admin can sign in.
 - [ ] Vercel production deployment is **Ready**.
 - [ ] The production URL opens.
 - [ ] `/dashboard` redirects to `/login`.
-- [ ] The admin from 10.3 can sign in, sees **Users** and `/admin/users`
-      opens.
-- [ ] Sign out (header) returns to `/login`.
-- [ ] Sign-up is off: **Authentication → Sign In / Providers** shows
-      _Allow new users to sign up_ = off.
+- [ ] Sign up / sign in works; the confirmation email links back to the
+      production domain; a `profiles` row is created.
+- [ ] Delete the test user afterwards if you do not want it in production.
 
 ### Preview
 
@@ -553,9 +572,8 @@ open a PR.
 
 - [ ] CI **checks** are green.
 - [ ] Vercel posts a preview URL on the PR.
-- [ ] The staging admin from 10.3 can sign in on the preview URL. An
-      invitation created there appears in the **staging** project, not in
-      production.
+- [ ] Sign-in on the preview URL works and the user appears in the
+      **staging** project, not in production.
 
 Close or merge the PR afterwards.
 
@@ -582,8 +600,7 @@ Already verified in Phase 4.
 ### The workflow for every feature from now on
 
 ```bash
-git switch main
-git pull
+git switch main && git pull
 git switch -c feat/short-description
 
 # If the database changes:
@@ -593,7 +610,7 @@ npx supabase db reset
 npm run db:types
 
 # Before pushing:
-npm run check
+npm run lint && npm run format:check && npm run typecheck && npm run build
 
 git add -A
 git commit -m "feat: short description"
@@ -610,15 +627,16 @@ production. Details: [`checklists/deploy.md`](./checklists/deploy.md).
 
 | Symptom                                                 | Likely cause and fix                                                                                                                   |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `new-app.mjs` or `npm run setup` stops halfway          | Fix the cause it prints (usually Docker not running) and run the same command again. Every step is safe to repeat.                     |
 | `supabase start` fails with Docker errors               | Docker Desktop is not running. Wait for _Engine running_. On Windows run `wsl --update` and restart.                                   |
 | `supabase start` reports a port in use                  | Another app's local Supabase is running. Run `npx supabase stop` in that app's folder.                                                 |
 | Local database of another app disappeared               | Both apps have the same `project_id`. Give each app a unique one (Phase 3).                                                            |
 | App crashes with an environment variable error          | `.env.local` is missing or incomplete (locally) or the variable is missing for that environment (Vercel). Compare with `.env.example`. |
 | Vercel build passes but the app uses the wrong database | Production and Preview variables swapped, or not redeployed after changing a `NEXT_PUBLIC_` value.                                     |
-| Accounts appear that nobody invited                     | Sign-up is still allowed in that Supabase project. Turn it off (Phase 10) and delete those users.                                      |
-| No admin can sign in                                    | Create a new admin invitation with `scripts/invite-admin.mjs` (Phase 10.3).                                                            |
-| Invitation link says it can’t be used                   | It expired, was cancelled, was replaced by a newer one or was already used. Create a new invitation.                                   |
+| Sign-in email links point to `localhost`                | Site URL / Redirect URLs not set in that Supabase project (Phase 10).                                                                  |
 | Sign-in loop locally                                    | Mixing `localhost` and `127.0.0.1`. Use the host from `site_url`.                                                                      |
 | `db push` fails: authentication                         | Wrong DB password secret or expired access token.                                                                                      |
 | `db push` fails: migration history mismatch             | Someone changed the cloud schema in the dashboard, or a merged migration was edited. Fix with a new migration; never edit merged ones. |
-| Cannot select `checks` or `integration` in the ruleset  | CI has not run yet in this repository. Finish Phase 5 first.                                                                           |     |
+| Cannot select `checks` in the ruleset                   | CI has not run yet in this repository. Finish Phase 5 first.                                                                           |
+| `new-app.mjs`: ruleset not created on a private repo    | Private repositories on GitHub Free cannot enforce rulesets. Make the repository public or upgrade, or protect `main` by discipline.   |
+| `new-app.mjs`: `git push` asks for credentials          | Run `gh auth setup-git` once, then run the script again.                                                                               |
