@@ -25,6 +25,8 @@
         created as already confirmed.
   - [ ] **Password settings:** minimum length **12**; required characters
         **lowercase, uppercase letters, digits and symbols**.
+  - [ ] **Email provider:** _Secure password change_ = **off**. When on, it
+        requires a code sent by email, and the app sends no emails.
 
 ### Vercel
 
