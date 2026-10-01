@@ -23,10 +23,11 @@ Copy this list into the first issue or PR of the new app and tick items off.
 
 See [`ui-guidelines.md`](../ui-guidelines.md#5-branding-a-new-app).
 
-- [ ] Choose the primary colour and paste theme values into
-      `src/app/globals.css` (`:root` and `.dark`).
-- [ ] Choose the font in `src/app/layout.tsx` (or keep Geist).
-- [ ] Choose `--radius` (sharper or rounder corners).
+- [ ] Choose the brand colour (preview it in Material Theme Builder).
+- [ ] Generate the MD3 scheme:
+      `npm run theme:generate -- --seed "#RRGGBB"` and commit
+      `src/styles/md3-theme.css`.
+- [ ] Choose the font in `src/app/layout.tsx` (or keep Roboto Flex).
 - [ ] Replace `src/app/favicon.ico`.
 - [ ] Replace the content of `src/app/(marketing)/page.tsx`.
 - [ ] Check light and dark mode, and a 375 px wide screen.
@@ -46,12 +47,11 @@ See [`ui-guidelines.md`](../ui-guidelines.md#5-branding-a-new-app).
 
 - [ ] **Settings → General → Pull Requests:** only **Allow squash merging**
       enabled; **Automatically delete head branches** enabled.
-- [ ] Open a first small PR so the CI jobs **checks** and **integration** run
-      once (GitHub can only require a check it has seen).
+- [ ] Open a first small PR so the **checks** workflow runs once
+      (GitHub can only require a check it has seen).
 - [ ] **Settings → Rules → Rulesets:** create `protect-main` for the default
       branch: restrict deletions, block force pushes, require a pull request
-      (0 approvals when working alone), require status checks `checks` and
-      `integration`.
+      (0 approvals when working alone), require status check `checks`.
 - [ ] **Settings → Advanced Security:** enable Dependabot alerts and
       Dependabot security updates.
 

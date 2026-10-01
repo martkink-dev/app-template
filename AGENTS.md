@@ -150,6 +150,9 @@ Read `docs/ui-guidelines.md` before building UI.
 - Add shadcn components with `npx shadcn@latest add <name>`.
 - Signed-in pages go in `src/app/(app)/` and are added to `appNav`.
 - Mobile first; check layouts at 375 px width.
+- Theme colours come from `src/styles/md3-theme.css` (generated, Material
+  Design 3). Change them only with `npm run theme:generate`, never by hand.
+- `src/components/ui/button.tsx` is customised (MD3); do not overwrite it.
 
 ## Git workflow
 

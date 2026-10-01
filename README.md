@@ -92,15 +92,16 @@ Level Security enabled. See `AGENTS.md` for the full rules.
 
 ## Scripts
 
-| Command                | Purpose                                       |
-| ---------------------- | --------------------------------------------- |
-| `npm run dev`          | Start the dev server                          |
-| `npm run lint`         | Run ESLint                                    |
-| `npm run format`       | Format all files                              |
-| `npm run format:check` | Check formatting                              |
-| `npm run typecheck`    | Type-check the project                        |
-| `npm run build`        | Production build                              |
-| `npm run db:types`     | Regenerate database types from local Supabase |
+| Command                  | Purpose                                               |
+| ------------------------ | ----------------------------------------------------- |
+| `npm run dev`            | Start the dev server                                  |
+| `npm run lint`           | Run ESLint                                            |
+| `npm run format`         | Format all files                                      |
+| `npm run format:check`   | Check formatting                                      |
+| `npm run typecheck`      | Type-check the project                                |
+| `npm run build`          | Production build                                      |
+| `npm run db:types`       | Regenerate database types from local Supabase         |
+| `npm run theme:generate` | Generate the MD3 colour theme (`-- --seed "#RRGGBB"`) |
 
 ## Environments
 
