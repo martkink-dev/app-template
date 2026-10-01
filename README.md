@@ -42,55 +42,23 @@ Supabase cloud and Vercel setup, is in
 1. On GitHub, open this repository and click **Use this template → Create a new repository**.
 2. Clone the new repository and install dependencies:
 
-   ```bash
+```bash
    git clone https://github.com/<user>/<new-app>.git
    cd <new-app>
    npm install
-   ```
+```
 
-3. Give the app its own identity:
-   - `package.json`: change `"name"`.
-   - `supabase/config.toml`: change `project_id` to the app name.
-     Each local project needs a unique id, otherwise Docker containers from
-     different apps collide.
-   - `src/config/site.ts`: change the app name, description and locale.
+3. Start Docker Desktop, then run the setup script with the app name:
 
-4. Start local Supabase (Docker Desktop must be running):
+```bash
+   npm run setup -- <new-app>
+```
 
-   ```bash
-   npx supabase start
-   ```
+It gives the app its own identity, starts local Supabase, creates
+`.env.local`, builds the local database and generates the types.
 
-5. Create `.env.local` from the example and fill in the local values:
-
-   ```bash
-   cp .env.example .env.local
-   npx supabase status -o env
-   ```
-
-   On Windows PowerShell use `Copy-Item .env.example .env.local`.
-   Copy `API_URL` to `NEXT_PUBLIC_SUPABASE_URL`, `PUBLISHABLE_KEY`
-   (or `ANON_KEY`) to `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and
-   `SECRET_KEY` (or `SERVICE_ROLE_KEY`) to `SUPABASE_SECRET_KEY`.
-
-6. Build the database and start the app:
-
-   ```bash
-   npx supabase db reset
-   npm run db:types
-   npm run dev
-   ```
-
-7. Create the first admin. There is no sign-up page, so the first account
-   comes from an invitation created in the terminal:
-
-   ```bash
-   npm run users:invite-admin -- you@example.com http://127.0.0.1:3000
-   ```
-
-   Open the printed link and set a password. Use `127.0.0.1`, not
-   `localhost`, as in `site_url` in `supabase/config.toml`.
-   Supabase Studio runs at <http://127.0.0.1:54323>.
+4. Run `npm run dev` and open the URL shown in the terminal. Supabase Studio
+   runs at <http://127.0.0.1:54323>.
 
 ## Daily workflow
 
