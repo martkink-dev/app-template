@@ -268,7 +268,8 @@ git push -u origin chore/project-setup
 On GitHub, open a pull request with the title
 `chore: set up project identity` and fill in the PR template.
 
-- The **CI → checks** job runs and must turn green.
+- The **CI** workflow runs two jobs, **checks** and **integration**; both
+  must turn green.
 - The **Database migrations** workflow does not run (it only runs on `main`
   when migrations change, and it skips itself until the Supabase variables
   are set in Phase 8).
@@ -311,7 +312,7 @@ Conventional Commit per PR.
   - [ ] Block force pushes
   - [ ] Require a pull request before merging — required approvals: **0**
         when you work alone (otherwise you could never merge your own PRs)
-  - [ ] Require status checks to pass — add **`checks`**
+  - [ ] Require status checks to pass — add **`checks`** and **`integration`**
 
 Save. From now on nothing reaches `main` without a PR and green CI.
 
@@ -599,4 +600,4 @@ production. Details: [`checklists/deploy.md`](./checklists/deploy.md).
 | Sign-in loop locally                                    | Mixing `localhost` and `127.0.0.1`. Use the host from `site_url`.                                                                      |
 | `db push` fails: authentication                         | Wrong DB password secret or expired access token.                                                                                      |
 | `db push` fails: migration history mismatch             | Someone changed the cloud schema in the dashboard, or a merged migration was edited. Fix with a new migration; never edit merged ones. |
-| Cannot select `checks` in the ruleset                   | CI has not run yet in this repository. Finish Phase 5 first.                                                                           |
+| Cannot select `checks` or `integration` in the ruleset  | CI has not run yet in this repository. Finish Phase 5 first.                                                                           |     |

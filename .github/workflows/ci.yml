@@ -79,6 +79,9 @@ jobs:
           eval "$(npx supabase status -o env)"
           echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${PUBLISHABLE_KEY:-$ANON_KEY}" >> "$GITHUB_ENV"
+          # Local Supabase keys are fixed defaults, not real secrets.
+          # Needed by the invitation page and admin actions (createAdminClient).
+          echo "SUPABASE_SECRET_KEY=${SECRET_KEY:-$SERVICE_ROLE_KEY}" >> "$GITHUB_ENV"
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
