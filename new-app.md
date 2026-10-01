@@ -1,25 +1,60 @@
 # Checklist: start a new app
 
 Copy this list into the first issue or PR of the new app and tick items off.
+Details for every step: [`new-app-guide.md`](../new-app-guide.md).
 
-## 1. Repository
+## 1. Before you start (once per computer)
 
-- [ ] On GitHub: **Use this template → Create a new repository**.
+- [ ] Node.js, Git, Docker Desktop and VS Code are installed.
+- [ ] GitHub CLI is installed and signed in: `gh auth status`
+      (otherwise `gh auth login`).
+- [ ] The template repository is marked as a template on GitHub
+      (**Settings → General → Template repository**).
+
+## 2. Create the app (script)
+
+- [ ] Choose the app name in kebab-case, for example `invoice-tracker`.
 - [ ] Choose visibility. On GitHub Free, branch protection works only on
       **public** repositories. A private repository needs GitHub Pro, otherwise
       `main` is protected by discipline only.
-- [ ] Clone the repository and run `npm install`.
+- [ ] Docker Desktop is running (_Engine running_).
+- [ ] In the template folder: `git switch main` and `git pull`.
+- [ ] Run:
 
-## 2. Identity
+  ```bash
+  node scripts/new-app.mjs <app> --private --title "<App Title>" --description "<One sentence>"
+  ```
 
-- [ ] `package.json`: change `"name"`.
-- [ ] `supabase/config.toml`: change `project_id` (must be unique per app on
-      this computer).
-- [ ] `src/config/site.ts`: change `name`, `description` and `locale`.
-- [ ] `README.md`: replace the template title and description.
-- [ ] `AGENTS.md`: describe what this app does in the **Project** section.
+  It creates the repository, clones it next to the template folder, sets the
+  identity, starts local Supabase, opens the first pull request, sets the
+  pull request settings and Dependabot, waits for CI and creates the
+  `protect-main` ruleset. Add `--merge` to merge the first pull request when
+  CI is green. Safe to run again if it stops halfway.
 
-## 3. Branding
+- [ ] The script ended without warnings. A ruleset warning on a private
+      repository on GitHub Free is expected.
+- [ ] Without `--merge`: the PR checks are green → **Squash and merge** →
+      in the app folder `git switch main` and `git pull`.
+
+Without the GitHub CLI, do the same by hand: guide phases 2–6.
+
+## 3. Check the new app
+
+- [ ] Open the app folder in VS Code (`code ..\<app>`) and accept the
+      recommended extensions.
+- [ ] `npm run dev` works and the home page shows the app title.
+- [ ] Opening `/dashboard` redirects to `/login?next=/dashboard`.
+- [ ] On GitHub: **Settings → Rules → Rulesets** shows `protect-main` as
+      Active (public repositories or paid plans).
+
+## 4. Describe the app (on a branch)
+
+- [ ] `AGENTS.md`: replace the TODO in the **Project** section with who uses
+      the app and the domain terms an AI assistant should know.
+- [ ] `src/config/site.ts`: check `name`, `description` and `locale`.
+- [ ] `README.md`: add anything a new developer on this app needs to know.
+
+## 5. Branding
 
 See [`ui-guidelines.md`](../ui-guidelines.md#5-branding-a-new-app).
 
@@ -31,28 +66,6 @@ See [`ui-guidelines.md`](../ui-guidelines.md#5-branding-a-new-app).
 - [ ] Replace the content of `src/app/(marketing)/page.tsx`.
 - [ ] Check light and dark mode, and a 375 px wide screen.
 - [ ] Check text contrast on `primary` buttons in both themes.
-
-## 4. Local environment
-
-- [ ] Docker Desktop is running (_Engine running_).
-- [ ] `npx supabase start`
-- [ ] Create `.env.local` from `.env.example` and fill it in
-      (`npx supabase status -o env`).
-- [ ] `npx supabase db reset` and `npm run db:types`
-- [ ] `npm run dev` works and the home page opens.
-- [ ] Opening `/dashboard` redirects to `/login?next=/dashboard`.
-
-## 5. GitHub settings
-
-- [ ] **Settings → General → Pull Requests:** only **Allow squash merging**
-      enabled; **Automatically delete head branches** enabled.
-- [ ] Open a first small PR so the **checks** workflow runs once
-      (GitHub can only require a check it has seen).
-- [ ] **Settings → Rules → Rulesets:** create `protect-main` for the default
-      branch: restrict deletions, block force pushes, require a pull request
-      (0 approvals when working alone), require status check `checks`.
-- [ ] **Settings → Advanced Security:** enable Dependabot alerts and
-      Dependabot security updates.
 
 ## 6. Cloud environments
 

@@ -2,12 +2,16 @@
 /**
  * Sets up an app built from app-template.
  *
- * New app (once, right after cloning the new repository):
- *   npm run setup -- <app-name> [--title "Invoice Tracker"]
- *                   [--description "..."] [--locale en]
+ * New app (scripts/new-app.mjs runs this for you; by hand, once, right
+ * after cloning the new repository):
+ *   node scripts/setup.mjs <app-name> [--title "Invoice Tracker"]
+ *                          [--description "..."] [--locale en]
  *
  * Existing app (new developer or new computer):
- *   npm run setup [-- --reset]
+ *   npm run setup            (or: node scripts/setup.mjs --reset)
+ *
+ * Flags are passed with `node scripts/setup.mjs ...` rather than
+ * `npm run setup -- ...`, because Windows PowerShell can drop the `--`.
  *
  * What it does:
  *   1. Identity (only when <app-name> is given): switches to the
@@ -34,7 +38,8 @@ const TEMPLATE_AGENTS_LINE =
   "A web application built from the `app-template` framework.";
 const SETUP_BRANCH = "chore/project-setup";
 const NAME_PATTERN = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
-const THIS_SCRIPT = "scripts/setup.mjs";
+// Template tools mention the template name on purpose.
+const TEMPLATE_TOOLS = ["scripts/setup.mjs", "scripts/new-app.mjs"];
 
 const { values: options, positionals } = parseArgs({
   allowPositionals: true,
@@ -179,8 +184,8 @@ function gettingStartedSection(repoUrl, appName) {
     "",
     "`npm run setup` starts local Supabase (Docker Desktop must be running),",
     "creates `.env.local` with the local values and regenerates the database",
-    "types. Add `-- --reset` to rebuild the local database from the",
-    "migrations and `seed.sql`.",
+    "types. To rebuild the local database from the migrations and",
+    "`seed.sql`, run `node scripts/setup.mjs --reset`.",
     "",
     "Open the URL shown in the terminal. Supabase Studio runs at",
     "<http://127.0.0.1:54323>.",
@@ -398,7 +403,7 @@ function reportLeftovers() {
   const hits = files.stdout
     .split(/\r?\n/)
     .filter((path) => path && !path.startsWith("docs/"))
-    .filter((path) => path !== THIS_SCRIPT && existsSync(path))
+    .filter((path) => !TEMPLATE_TOOLS.includes(path) && existsSync(path))
     .filter((path) => read(path).includes(TEMPLATE_NAME));
   if (hits.length === 0) {
     log.ok(`No '${TEMPLATE_NAME}' leftovers outside docs/.`);
@@ -409,8 +414,8 @@ function reportLeftovers() {
 
 function printHelp() {
   console.log(`Usage:
-  npm run setup -- <app-name> [options]   Set up a new app from the template
-  npm run setup [-- --reset]              Set up the local environment only
+  node scripts/setup.mjs <app-name> [options]   Set up a new app
+  node scripts/setup.mjs [--reset]              Local environment only
 
 Options:
   --title <text>        App title (default: from the app name)
@@ -453,8 +458,8 @@ async function main() {
     await setIdentity(appName);
   } else if (currentName === TEMPLATE_NAME) {
     log.info(
-      "This is the template itself. To start a new app, pass its name: " +
-        "npm run setup -- <app-name>",
+      "This is the template itself. To start a new app, run: " +
+        "node scripts/new-app.mjs <app-name> --private",
     );
   }
 
@@ -467,6 +472,8 @@ async function main() {
   log.step("Done");
   if (appName) {
     reportLeftovers();
+    // scripts/new-app.mjs commits, pushes and opens the PR itself.
+    if (process.env.NEW_APP_RUNNING === "1") return;
     console.log(`
 Next steps:
   1. Review the changes: git status, git diff
