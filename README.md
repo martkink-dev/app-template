@@ -77,11 +77,16 @@ Level Security enabled. See `AGENTS.md` for the full rules.
 
 ## Environments
 
-| Environment | App                   | Database                 |
-| ----------- | --------------------- | ------------------------ |
-| Local       | `npm run dev`         | Supabase CLI (Docker)    |
-| Preview     | Vercel PR preview     | Supabase staging project |
-| Production  | Vercel, `main` branch | Supabase production      |
+| Environment | App                      | Database              |
+| ----------- | ------------------------ | --------------------- |
+| Local       | `npm run dev`            | Supabase CLI (Docker) |
+| Preview     | Vercel deployment per PR | Supabase production   |
+| Production  | Vercel, `main` branch    | Supabase production   |
+
+There is no staging database: migrations are tested locally with
+`npx supabase db reset`. Previews use real data, and a preview of a PR that
+contains a migration only works after the merge. See
+[`docs/new-app-guide.md`](docs/new-app-guide.md#environments).
 
 ## Troubleshooting
 
