@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Roboto_Flex, Roboto_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -7,15 +7,17 @@ import { siteConfig } from "@/config/site";
 
 import "./globals.css";
 
-// To change the font, swap these imports and keep the variable names
-// (globals.css maps them to font-sans and font-mono).
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Material Design 3 uses Roboto. Roboto Flex is its variable version, so a
+// single file covers every weight. To change the font, swap these imports
+// and keep the variable names (globals.css maps them to font-sans and
+// font-mono).
+const appSans = Roboto_Flex({
+  variable: "--font-app-sans",
   subsets: ["latin", "latin-ext"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const appMono = Roboto_Mono({
+  variable: "--font-app-mono",
   subsets: ["latin", "latin-ext"],
 });
 
@@ -34,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang={siteConfig.locale}
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${appSans.variable} ${appMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider
