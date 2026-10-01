@@ -1,4 +1,9 @@
-import { LayoutDashboard, type LucideIcon, Users } from "lucide-react";
+import {
+  CircleUser,
+  LayoutDashboard,
+  type LucideIcon,
+  Users,
+} from "lucide-react";
 
 /**
  * App identity. Change these values when starting a new app.
@@ -25,4 +30,5 @@ export type NavItem = {
 export const appNav: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Users", href: "/admin/users", icon: Users, adminOnly: true },
+  { title: "Account", href: "/account", icon: CircleUser },
 ];

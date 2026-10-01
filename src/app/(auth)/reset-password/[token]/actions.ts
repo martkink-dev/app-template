@@ -97,5 +97,19 @@ export async function resetPassword(
 
   // The new password is set either way; if automatic sign-in fails, the user
   // signs in manually.
-  redirect(signInError ? "/login" : "/dashboard");
+  if (signInError) redirect("/login");
+
+  // End the user's sessions on other devices: someone who knew the old
+  // password must not stay signed in. The new session stays.
+  const { error: signOutError } = await supabase.auth.signOut({
+    scope: "others",
+  });
+  if (signOutError) {
+    console.error(
+      "resetPassword: signing out other sessions failed",
+      signOutError,
+    );
+  }
+
+  redirect("/dashboard");
 }
