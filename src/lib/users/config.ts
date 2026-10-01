@@ -6,6 +6,12 @@
 export const INVITATION_TTL_HOURS = 72;
 
 /**
+ * How long a password reset link stays valid. Shorter than an invitation:
+ * it gives access to an existing account.
+ */
+export const PASSWORD_RESET_TTL_HOURS = 24;
+
+/**
  * Ban length used to deactivate a user in Supabase Auth.
  * A banned user cannot sign in or refresh a session. "876000h" = ~100 years.
  */

@@ -12,8 +12,9 @@ create extension if not exists pgtap with schema extensions;
 select plan(26);
 
 -- ---------------------------------------------------------------------------
--- Test users. Role comes from raw_app_meta_data (only the secret key can set
--- it in real life). The on_auth_user_created trigger creates the profiles.
+-- Test users. The on_auth_user_created trigger creates the profiles, always
+-- as 'member'. The admin role is then set the way trusted server code does
+-- it (accepting an invitation): an update with full privileges.
 -- ---------------------------------------------------------------------------
 insert into auth.users (id, email, raw_app_meta_data) values
   ('a0000000-0000-0000-0000-00000000000a', 'admin@example.test', '{"role": "admin"}'),
@@ -22,15 +23,18 @@ insert into auth.users (id, email, raw_app_meta_data) values
 
 select is(
   (select role::text from public.profiles where id = 'a0000000-0000-0000-0000-00000000000a'),
-  'admin',
-  'New-user trigger copies the admin role from app metadata'
+  'member',
+  'New-user trigger ignores a role in app metadata'
 );
 
 select is(
   (select role::text from public.profiles where id = 'b0000000-0000-0000-0000-00000000000b'),
   'member',
-  'New-user trigger defaults to member'
+  'New-user trigger creates members'
 );
+
+update public.profiles set role = 'admin'
+  where id = 'a0000000-0000-0000-0000-00000000000a';
 
 select is(
   (select email from public.profiles where id = 'b0000000-0000-0000-0000-00000000000b'),

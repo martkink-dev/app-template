@@ -9,6 +9,7 @@ import { acceptInvitationSchema } from "@/lib/validations/users";
 
 export type AcceptInvitationState = { error?: string };
 
+const GENERIC_ERROR = "Something went wrong. Try again.";
 const INVALID_INVITATION =
   "This invitation link is invalid, has expired or has already been used. Ask an administrator for a new one.";
 
@@ -45,25 +46,28 @@ export async function acceptInvitation(
 
   if (claimError) {
     console.error("acceptInvitation: claim failed", claimError);
-    return { error: "Something went wrong. Try again." };
+    return { error: GENERIC_ERROR };
   }
   if (!invitation) return { error: INVALID_INVITATION };
 
-  const { error: createError } = await admin.auth.admin.createUser({
-    email: invitation.email,
-    password,
-    // The invitation link proves the person received it from an admin.
-    email_confirm: true,
-    // Read by public.handle_new_user() to set profiles.role.
-    app_metadata: { role: invitation.role },
-  });
-
-  if (createError) {
-    // Release the claim so the link can be used again after fixing the problem.
+  // Releases the claim so the link can be used again after a failure.
+  async function releaseClaim(invitationId: string) {
     await admin
       .from("invitations")
       .update({ accepted_at: null })
-      .eq("id", invitation.id);
+      .eq("id", invitationId);
+  }
+
+  const { data: created, error: createError } =
+    await admin.auth.admin.createUser({
+      email: invitation.email,
+      password,
+      // The invitation link proves the person received it from an admin.
+      email_confirm: true,
+    });
+
+  if (createError) {
+    await releaseClaim(invitation.id);
 
     if (createError.code === "weak_password") {
       return { error: "This password is too weak. Choose a stronger one." };
@@ -74,7 +78,25 @@ export async function acceptInvitation(
       };
     }
     console.error("acceptInvitation: createUser failed", createError);
-    return { error: "Something went wrong. Try again." };
+    return { error: GENERIC_ERROR };
+  }
+
+  // public.handle_new_user() creates every profile as 'member'. The role is
+  // set here, not through app_metadata: Supabase Auth writes app_metadata
+  // after inserting the user, so the trigger never sees it. Users cannot
+  // write profiles.role themselves (column grants), hence the admin client.
+  const { error: roleError } = await admin
+    .from("profiles")
+    .update({ role: invitation.role })
+    .eq("id", created.user.id);
+
+  if (roleError) {
+    // Undo the account so the invitation can be accepted again with the
+    // right role, rather than leaving a user with the wrong one.
+    console.error("acceptInvitation: setting role failed", roleError);
+    await admin.auth.admin.deleteUser(created.user.id);
+    await releaseClaim(invitation.id);
+    return { error: GENERIC_ERROR };
   }
 
   const supabase = await createClient();

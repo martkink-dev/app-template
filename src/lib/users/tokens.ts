@@ -3,11 +3,12 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 
 /**
- * Invitation tokens: 32 random bytes, base64url encoded (43 characters).
- * Only the SHA-256 hash is stored in the database, so a database leak does
- * not reveal usable invitation links.
+ * Link tokens: 32 random bytes, base64url encoded (43 characters).
+ * Used for invitation links and password reset links. Only the SHA-256 hash
+ * is stored in the database, so a database leak does not reveal usable links.
  *
- * scripts/invite-admin.mjs uses the same format; keep them in sync.
+ * scripts/invite-admin.mjs and scripts/reset-password.mjs use the same
+ * format; keep them in sync.
  */
 export function generateInvitationToken() {
   return randomBytes(32).toString("base64url");

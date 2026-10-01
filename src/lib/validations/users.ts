@@ -18,17 +18,21 @@ export const userIdSchema = z.uuid("Invalid user.");
 
 export const invitationIdSchema = z.uuid("Invalid invitation.");
 
-/** base64url of 32 bytes. */
+/**
+ * Token in invitation and password reset links: base64url of 32 bytes.
+ * (The name predates password resets; both links use the same format.)
+ */
 export const invitationTokenSchema = z
   .string()
-  .regex(/^[A-Za-z0-9_-]{43}$/, "Invalid invitation link.");
+  .regex(/^[A-Za-z0-9_-]{43}$/, "Invalid link.");
 
 export const createInvitationSchema = z.object({
   email: emailSchema,
   role: roleSchema,
 });
 
-export const acceptInvitationSchema = z
+/** A token from a link plus a new password, typed twice. */
+const tokenWithNewPasswordSchema = z
   .object({
     token: invitationTokenSchema,
     password: passwordSchema,
@@ -38,6 +42,10 @@ export const acceptInvitationSchema = z
     message: "The passwords do not match.",
     path: ["confirmPassword"],
   });
+
+export const acceptInvitationSchema = tokenWithNewPasswordSchema;
+
+export const resetPasswordSchema = tokenWithNewPasswordSchema;
 
 export const signInSchema = z.object({
   email: emailSchema,
