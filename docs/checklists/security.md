@@ -62,7 +62,8 @@ Go through this list before the first production release and then regularly
 - [ ] Only the people who need it have the `admin` role. Review the list in
       `/admin/users`.
 - [ ] People who have left are deactivated or deleted.
-- [ ] Old open invitations are cancelled.
+- [ ] Old open invitations and password reset links are cancelled
+      (create a new link or let them expire).
 
 ## Input and output
 

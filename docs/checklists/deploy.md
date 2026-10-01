@@ -91,7 +91,9 @@ Run after the migrations have reached the project.
       **Instant Rollback**.
 - [ ] **Database:** never fix production by hand in the dashboard. Write a new
       migration that fixes the problem and ship it through a PR.
-- [ ] **No admin can sign in:** create a new admin invitation with
-      `scripts/invite-admin.mjs` (see _First admin_ above).
+- [ ] **No admin can sign in:** if the admin forgot the password, create a
+      reset link with `scripts/reset-password.mjs` (same env file steps as
+      _First admin_). If no admin account exists, create a new admin
+      invitation with `scripts/invite-admin.mjs`.
 - [ ] Know your backup options before you need them (they depend on the
       Supabase plan).
