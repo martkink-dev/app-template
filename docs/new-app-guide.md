@@ -21,14 +21,42 @@ Expected time: 60–90 minutes the first time, about 30 minutes once routine.
 | 4     | Start the local environment             | App + local Supabase running            |
 | 5     | First pull request                      | CI has run once, identity is on `main`  |
 | 6     | Protect the repository                  | `main` protected, Dependabot on         |
-| 7     | Create Supabase cloud projects          | Staging and production databases        |
+| 7     | Create the Supabase cloud project       | Production database                     |
 | 8     | Connect GitHub Actions to Supabase      | Migrations deploy automatically         |
 | 9     | Deploy to Vercel                        | Preview and production URLs             |
 | 10    | Configure Supabase Auth URLs            | Sign-in emails point to the right place |
-| 11    | Verify all three environments           | Everything works end to end             |
+| 11    | Verify the environments                 | Everything works end to end             |
 | 12    | Prepare for the first feature           | Ready to build                          |
 
 Phases 2–6 are done by one command, see [Fast path](#fast-path-phases-26-with-one-command).
+
+### Environments
+
+| Environment | App                      | Database                      |
+| ----------- | ------------------------ | ----------------------------- |
+| Local       | `npm run dev`            | Supabase CLI (Docker)         |
+| Preview     | Vercel deployment per PR | **Production** (`<app>-prod`) |
+| Production  | Vercel, `main` branch    | Production (`<app>-prod`)     |
+
+There is no staging database. The apps are personal and for learning, so a
+second cloud project per app costs more (Free plan project limit, a second set
+of secrets and Auth settings) than it saves. What this means in practice:
+
+- **Local is the only place where migrations are tested before production.**
+  `npx supabase db reset` replays every migration from scratch; never skip it.
+- **A preview uses real data.** Anything you create or delete on a preview
+  URL happens in production.
+- **A preview of a PR that contains a migration does not work reliably**,
+  because the migration only reaches the database after the merge. Test such
+  PRs locally; the preview is for PRs that do not change the schema.
+- **Migrations must be backward compatible** (see Phase 12), because older
+  previews and the running production code keep using the same database
+  while a new migration is applied.
+
+To add a staging database later (for example when other people start using
+an app), create a second Supabase project, point the Vercel **Preview**
+variables at it and add a staging job to `db-push.yml` that runs before the
+production job.
 
 Order matters in phases 7–10: the databases must exist and have the schema
 before the app is deployed, and the Auth URLs can only be set once Vercel has
@@ -116,14 +144,13 @@ Pick one short name in **kebab-case**, for example `invoice-tracker`.
 It is used in all of these places, and keeping them identical saves confusion
 later:
 
-| Where                                 | Value                     |
-| ------------------------------------- | ------------------------- |
-| GitHub repository                     | `invoice-tracker`         |
-| `package.json` → `name`               | `invoice-tracker`         |
-| `supabase/config.toml` → `project_id` | `invoice-tracker`         |
-| Supabase staging project              | `invoice-tracker-staging` |
-| Supabase production project           | `invoice-tracker-prod`    |
-| Vercel project                        | `invoice-tracker`         |
+| Where                                 | Value                  |
+| ------------------------------------- | ---------------------- |
+| GitHub repository                     | `invoice-tracker`      |
+| `package.json` → `name`               | `invoice-tracker`      |
+| `supabase/config.toml` → `project_id` | `invoice-tracker`      |
+| Supabase project                      | `invoice-tracker-prod` |
+| Vercel project                        | `invoice-tracker`      |
 
 In the rest of this guide `<app>` means this name and `<user>` means your
 GitHub user or organisation.
@@ -399,30 +426,32 @@ Save. From now on nothing reaches `main` without a PR and green CI.
 
 ---
 
-## Phase 7 — Create the Supabase cloud projects
+## Phase 7 — Create the Supabase cloud project
 
-Two projects: one for previews (staging) and one for production. They never
-share data.
+One project. It serves both production and the Vercel previews (see
+[Environments](#environments)).
 
-### 7.1 Create the projects
+### 7.1 Create the project
 
-In the Supabase dashboard, **New project**, twice:
+In the Supabase dashboard, **New project**:
 
-| Setting           | Staging                            | Production                         |
-| ----------------- | ---------------------------------- | ---------------------------------- |
-| Name              | `<app>-staging`                    | `<app>-prod`                       |
-| Database password | Generate, save in password manager | Generate, save in password manager |
-| Region            | Central EU (Frankfurt)             | Central EU (Frankfurt)             |
+| Setting           | Value                              |
+| ----------------- | ---------------------------------- |
+| Name              | `<app>-prod`                       |
+| Database password | Generate, save in password manager |
+| Region            | Central EU (Frankfurt)             |
 
-Use the same region for both, close to your users.
+The `-prod` suffix keeps the name unambiguous if a staging project is ever
+added.
 
 > Plan limits: the Free plan allows only a small number of active projects
-> and pauses inactive ones. A real production app usually needs a paid plan.
+> and pauses a project after a week without activity. Unpause it in the
+> dashboard when needed. The Free plan has no point-in-time recovery; see
+> Phase 12 for backups before risky migrations.
 
 ### 7.2 Collect the values
 
-For **each** project, write down (in the password manager, next to the DB
-password):
+Write down (in the password manager, next to the DB password):
 
 | Value            | Where in the dashboard                           |
 | ---------------- | ------------------------------------------------ |
@@ -443,8 +472,8 @@ GitHub Actions in Phase 8.
 ## Phase 8 — Connect GitHub Actions to Supabase
 
 The **Database migrations** workflow (`.github/workflows/db-push.yml`) runs
-`supabase db push` against staging and then production whenever migrations
-change on `main`.
+`supabase db push` against the production project whenever migrations change
+on `main`.
 
 ### 8.1 Create a Supabase access token
 
@@ -459,7 +488,6 @@ Repository → **Settings → Secrets and variables → Actions**.
 
 | Name                             | Value                 |
 | -------------------------------- | --------------------- |
-| `SUPABASE_STAGING_PROJECT_ID`    | staging Project ID    |
 | `SUPABASE_PRODUCTION_PROJECT_ID` | production Project ID |
 
 **Secrets** tab:
@@ -467,21 +495,19 @@ Repository → **Settings → Secrets and variables → Actions**.
 | Name                              | Value                  |
 | --------------------------------- | ---------------------- |
 | `SUPABASE_ACCESS_TOKEN`           | token from 8.1         |
-| `SUPABASE_STAGING_DB_PASSWORD`    | staging DB password    |
 | `SUPABASE_PRODUCTION_DB_PASSWORD` | production DB password |
 
 ### 8.3 Apply the existing migrations
 
 **Actions → Database migrations → Run workflow**, branch **main**.
 
-- [ ] **Push to staging** is green.
 - [ ] **Push to production** is green.
 
-Check in each Supabase project (Table Editor, read only) that the `profiles`
+Check in the Supabase project (Table Editor, read only) that the `profiles`
 table exists.
 
-If the workflow is started from any branch other than `main`, only staging is
-updated. Production only ever receives migrations from `main`.
+If the workflow is started from any branch other than `main`, the job is
+skipped. Production only ever receives migrations from `main`.
 
 ---
 
@@ -494,16 +520,21 @@ detected as Next.js; leave the build settings at their defaults.
 
 ### 9.2 Environment variables
 
-Before clicking **Deploy**, open **Environment Variables** and add each
-variable **per environment**:
+Before clicking **Deploy**, open **Environment Variables**. Add each variable
+once and tick the environments it applies to; Production and Preview get the
+**same** values:
 
-| Variable                                           | Production                 | Preview                       | Development |
-| -------------------------------------------------- | -------------------------- | ----------------------------- | ----------- |
-| `NEXT_PUBLIC_SUPABASE_URL`                         | prod Project URL           | staging Project URL           | —           |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`             | prod publishable           | staging publishable           | —           |
-| `SUPABASE_SECRET_KEY` (only if `admin.ts` is used) | prod secret, **Sensitive** | staging secret, **Sensitive** | —           |
+| Variable                                           | Value                      | Environments                    |
+| -------------------------------------------------- | -------------------------- | ------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                         | prod Project URL           | Production, Preview             |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`             | prod publishable           | Production, Preview             |
+| `SUPABASE_SECRET_KEY` (only if `admin.ts` is used) | prod secret, **Sensitive** | Production (Preview: see below) |
 
 Development stays empty: local development uses `.env.local`.
+
+`SUPABASE_SECRET_KEY` bypasses Row Level Security. Tick **Preview** for it only
+when a preview actually needs a feature that uses `admin.ts`: preview code has
+not been merged yet, and with this key it has full access to production data.
 
 `NEXT_PUBLIC_` values are baked into the build. After changing one, redeploy.
 
@@ -527,12 +558,19 @@ region is in the USA, which adds latency to every database call.
 Without this, sign-in and confirmation emails send users to the wrong place
 (often `localhost`).
 
-### 10.1 Production project (`<app>-prod`)
+### 10.1 URL configuration (`<app>-prod`)
 
 **Authentication → URL Configuration**:
 
 - Site URL: `https://<app>.vercel.app` (or your custom domain)
-- Redirect URLs: `https://<app>.vercel.app/**` — production domains only
+- Redirect URLs:
+  - `https://<app>.vercel.app/**` — production
+  - `https://*-<team-slug>.vercel.app/**` — previews
+
+The second entry matches all preview deployments of your Vercel team and
+nothing else. Previews need it because they use the production project.
+
+### 10.2 Email
 
 **Authentication → Sign In / Providers → Email**:
 
@@ -540,21 +578,12 @@ Without this, sign-in and confirmation emails send users to the wrong place
 
 **Custom SMTP** (Authentication → Emails → SMTP Settings): Supabase's
 built-in email sender is meant for testing and is heavily rate-limited. Set
-up a real SMTP provider before real users sign up.
-
-### 10.2 Staging project (`<app>-staging`)
-
-**Authentication → URL Configuration**:
-
-- Site URL: the production-like Vercel URL or any preview URL
-- Redirect URLs: `https://*-<team-slug>.vercel.app/**`
-
-This wildcard matches all preview deployments of your Vercel team and nothing
-else.
+up a real SMTP provider before real users sign up. For a personal app where
+you are the only user, the built-in sender is enough.
 
 ---
 
-## Phase 11 — Verify all three environments
+## Phase 11 — Verify the environments
 
 ### Production
 
@@ -572,8 +601,8 @@ open a PR.
 
 - [ ] CI **checks** are green.
 - [ ] Vercel posts a preview URL on the PR.
-- [ ] Sign-in on the preview URL works and the user appears in the
-      **staging** project, not in production.
+- [ ] Sign-in on the preview URL works and the confirmation email links
+      back to the **preview** URL, not to production.
 
 Close or merge the PR afterwards.
 
@@ -606,7 +635,7 @@ git switch -c feat/short-description
 # If the database changes:
 npx supabase migration new describe_the_change
 #   write SQL in the new file (RLS, revoke/grant, policies)
-npx supabase db reset
+npx supabase db reset   # replays ALL migrations: the only test before production
 npm run db:types
 
 # Before pushing:
@@ -617,9 +646,31 @@ git commit -m "feat: short description"
 git push -u origin feat/short-description
 ```
 
-Open a PR → checks green → preview works → **Squash and merge** →
-the migration workflow updates staging and production → Vercel deploys
-production. Details: [`checklists/deploy.md`](./checklists/deploy.md).
+Open a PR → checks green → preview works (only for PRs without a migration)
+→ **Squash and merge** → the migration workflow updates production → Vercel
+deploys production. Details: [`checklists/deploy.md`](./checklists/deploy.md).
+
+### Migrations without staging
+
+The production database is the first cloud database a migration reaches, so
+write migrations that cannot fail on existing data and do not break the code
+that is already running:
+
+- **Add, then remove.** Add new columns and tables first. Rename or drop old
+  ones in a later PR, after no code uses them.
+- **New columns on existing tables** are nullable or have a default. A
+  `not null` constraint without a default works locally on an empty table but
+  fails in production when the table has rows. Fill the data first, then add
+  the constraint in a separate migration.
+- **Before a risky migration** (dropping a column or table, transforming
+  data), take a backup of the production data:
+
+  ```bash
+  npx supabase link --project-ref <production-project-id>
+  npx supabase db dump --linked --data-only -f backup.sql
+  ```
+
+  Keep `backup.sql` outside the repository; it contains real data.
 
 ---
 
@@ -632,7 +683,8 @@ production. Details: [`checklists/deploy.md`](./checklists/deploy.md).
 | `supabase start` reports a port in use                  | Another app's local Supabase is running. Run `npx supabase stop` in that app's folder.                                                 |
 | Local database of another app disappeared               | Both apps have the same `project_id`. Give each app a unique one (Phase 3).                                                            |
 | App crashes with an environment variable error          | `.env.local` is missing or incomplete (locally) or the variable is missing for that environment (Vercel). Compare with `.env.example`. |
-| Vercel build passes but the app uses the wrong database | Production and Preview variables swapped, or not redeployed after changing a `NEXT_PUBLIC_` value.                                     |
+| Vercel build passes but the app uses the wrong database | A variable is not ticked for that environment, or not redeployed after changing a `NEXT_PUBLIC_` value.                                |
+| Preview of a PR shows database errors                   | The PR contains a migration that is not in production yet. Expected: test it locally; it works after the merge.                        |
 | Sign-in email links point to `localhost`                | Site URL / Redirect URLs not set in that Supabase project (Phase 10).                                                                  |
 | Sign-in loop locally                                    | Mixing `localhost` and `127.0.0.1`. Use the host from `site_url`.                                                                      |
 | `db push` fails: authentication                         | Wrong DB password secret or expired access token.                                                                                      |

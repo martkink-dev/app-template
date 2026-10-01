@@ -197,3 +197,21 @@ Read `docs/ui-guidelines.md` before building UI.
 - Commits and PR titles use Conventional Commits, e.g. `feat(auth): add login page`.
 - PRs are merged with squash merge after the required checks pass:
   `checks` and `integration`.
+
+## Environments
+
+- Local: Supabase CLI. Production: one Supabase project, also used by Vercel
+  preview deployments. There is no staging database.
+- Never run anything against the cloud project from a feature branch.
+  Migrations reach production only through `db-push.yml` after a merge to
+  `main`.
+
+## Migration rules (no staging)
+
+- Run `npx supabase db reset` after every migration change; it is the only
+  test before production.
+- Migrations must be backward compatible: add first, rename or drop in a
+  later PR once no code uses the old name.
+- New columns on existing tables are nullable or have a default. Add
+  `not null` in a separate migration after the data is filled.
+- Never edit a migration that has been merged; write a new one.
