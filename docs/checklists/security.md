@@ -71,7 +71,8 @@ Go through this list before the first production release and then regularly
 
 ## Repository and accounts
 
-- [ ] `main` is protected and requires the `checks` status check.
+- [ ] `main` is protected and requires the `checks` and `integration`
+      status checks.
 - [ ] Dependabot alerts are enabled and open alerts are handled.
 - [ ] Two-factor authentication is on for GitHub, Supabase and Vercel.
 - [ ] Only people who need access have it (GitHub, Supabase, Vercel).
