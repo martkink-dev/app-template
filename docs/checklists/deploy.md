@@ -68,9 +68,11 @@ Run after the migrations have reached the project.
 
 ## Every change
 
-- [ ] CI **checks** are green on the PR.
+- [ ] CI **checks** and **integration** are green on the PR.
 - [ ] If the PR contains a migration:
   - [ ] It is a **new** file; no merged migration was edited.
+  - [ ] New tables have an RLS test in `supabase/tests/database/` and
+        `npm run test:db` passes locally.
   - [ ] `npx supabase db reset` works locally.
   - [ ] `npm run db:types` was run and the types are committed.
   - [ ] It is **backward compatible**: the currently deployed code still works

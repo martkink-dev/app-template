@@ -26,13 +26,19 @@ Stack (do not change without an explicit decision from the owner):
 | `npm run format:check`              | Check formatting (used in CI)                 |
 | `npm run typecheck`                 | Generate Next.js route types and run `tsc`    |
 | `npm run build`                     | Production build                              |
+| `npm run test`                      | Unit and component tests (Vitest)             |
+| `npm run test:watch`                | Vitest in watch mode                          |
+| `npm run test:e2e`                  | E2E tests (Playwright, starts the dev server) |
+| `npm run test:db`                   | Database tests (pgTAP, needs local Supabase)  |
 | `npx supabase start`                | Start local Supabase (Docker must be running) |
 | `npx supabase db reset`             | Rebuild local DB from migrations + `seed.sql` |
 | `npm run db:types`                  | Regenerate `src/types/database.types.ts`      |
 | `npx supabase migration new <name>` | Create a new migration file                   |
 
 Before finishing any task, all of these must pass:
-`npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run build`.
+`npm run lint`, `npm run format:check`, `npm run typecheck`, `npm run test`,
+`npm run build`.
+If the task changes the database, `npm run test:db` must also pass.
 
 ## Project structure
 
@@ -45,8 +51,10 @@ src/
   lib/env.ts            Validated public environment variables
   types/                Generated database types
   proxy.ts              Next.js proxy: session refresh + route protection
+e2e/                    Playwright E2E tests
 supabase/
   migrations/           SQL migrations (the only way to change the schema)
+  tests/database/       pgTAP database tests (RLS policies)
   seed.sql              Local development seed data
 ```
 
@@ -64,6 +72,16 @@ supabase/
 4. After adding a migration, run `npx supabase db reset` and `npm run db:types`,
    and commit the regenerated types together with the migration.
 5. Reuse `public.set_updated_at()` for `updated_at` columns.
+
+## Testing
+
+- Unit/component tests: `*.test.ts(x)` next to the code (Vitest + Testing Library).
+- E2E tests: `e2e/*.spec.ts` (Playwright). Use for pages, auth flows and
+  async Server Components, which Vitest cannot render.
+- Database tests: `supabase/tests/database/*.test.sql` (pgTAP).
+  Every migration that creates a table must add `<table>.test.sql` that
+  checks its RLS policies (copy the pattern in `profiles.test.sql`).
+- Add or update tests with every feature or bug fix.
 
 ## Supabase clients: which one to use
 
