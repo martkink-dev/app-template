@@ -130,7 +130,5 @@ Staging or production: see "User management" in
 
 ## Not included (add when an app needs it)
 
-- **Changing your own password** while signed in
-  (`supabase.auth.updateUser({ password })`).
 - **More roles.** Add values to `public.app_role` in a new migration and to
   `APP_ROLES` in `src/lib/validations/users.ts`.
