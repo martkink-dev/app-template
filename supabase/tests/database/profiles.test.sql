@@ -14,7 +14,7 @@ select is(
   (select count(*)::int from public.profiles
    where id in ('a0000000-0000-0000-0000-00000000000a', 'b0000000-0000-0000-0000-00000000000b')),
   2,
-  'Signup trigger creates a profile for each new user'
+  'New-user trigger creates a profile for each new user'
 );
 
 -- Anonymous visitors: no privileges at all.

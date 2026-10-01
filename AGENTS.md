@@ -120,6 +120,16 @@ supabase/
 - Never let users write `profiles.role`, `status` or `email`.
 - New tables referencing users need `on delete cascade` or `on delete set null`.
 
+## Authentication model
+
+- Accounts are created ONLY from invitations (`/invite/<token>`).
+  Never add a sign-up page, a `signUp()` call or a "Create account" link.
+- Public sign-up is disabled in `supabase/config.toml` and must stay
+  disabled in the hosted projects.
+- Signed-out pages (`/login`, `/invite`) live in `src/app/(auth)/`.
+- Admin-only pages live under `src/app/(app)/admin/`, call `requireAdmin()`
+  and use `adminOnly: true` in `appNav`.
+
 ## Code conventions
 
 - TypeScript strict; avoid `any`. Use generated `Database` types.

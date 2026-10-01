@@ -6,6 +6,9 @@ import { safeRedirectPath } from "@/lib/auth/safe-redirect";
 import { createClient } from "@/lib/supabase/server";
 import { signInSchema } from "@/lib/validations/users";
 
+/** Where users land after signing in when there is no valid `next`. */
+const AFTER_SIGN_IN_PATH = "/dashboard";
+
 export type SignInState = { error?: string };
 
 export async function signIn(
@@ -32,7 +35,7 @@ export async function signIn(
     };
   }
 
-  redirect(safeRedirectPath(formData.get("next")));
+  redirect(safeRedirectPath(formData.get("next"), AFTER_SIGN_IN_PATH));
 }
 
 export async function signOut() {

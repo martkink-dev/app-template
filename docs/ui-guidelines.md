@@ -62,11 +62,17 @@ Light values are in `:root`, dark values in `.dark`. Dark mode is handled by
 | --------------------- | --------------------------------- | ------------------------ |
 | `src/app/(marketing)` | Public pages (home, pricing, ...) | Header + footer          |
 | `src/app/(app)`       | Signed-in area                    | Sidebar / mobile top bar |
-| `src/app/(auth)`      | Sign in, sign up (when added)     | Centred card             |
+| `src/app/(auth)`      | Sign in, accept invitation        | Centred card             |
 
 Route groups (folders in brackets) do not appear in the URL.
 New signed-in pages go in `src/app/(app)/<name>/page.tsx` and are added to
 `appNav` in `src/config/site.ts`. Every page starts with `PageHeader`.
+
+Admin-only pages go in `src/app/(app)/admin/<name>/`, call `requireAdmin()`
+and use `adminOnly: true` in `appNav`. Hiding the link does not protect the
+page.
+
+Accounts are created only from invitations. Do not add a sign-up page.
 
 ## 5. Branding a new app
 

@@ -85,5 +85,5 @@ export async function acceptInvitation(
 
   // The account exists either way; if automatic sign-in fails, the user
   // signs in manually.
-  redirect(signInError ? "/login" : "/");
+  redirect(signInError ? "/login" : "/dashboard");
 }
