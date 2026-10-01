@@ -28,10 +28,12 @@ export const metadata: Metadata = {
   title: "Users",
 };
 
-export default async function AdminUsersPage() {
-  // Non-admins get a 404. Hiding the nav link is not the protection.
-  const currentAdmin = await requireAdmin();
-
+/**
+ * Loads the page data. Kept outside the component because it reads the
+ * current time (to mark expired invitations), and React components must be
+ * pure: no Date.now() during render (react-hooks/purity).
+ */
+async function loadUsersPageData() {
   // The admin's own session: RLS lets admins read all profiles and invitations.
   const supabase = await createClient();
   const [usersResult, invitationsResult] = await Promise.all([
@@ -51,9 +53,21 @@ export default async function AdminUsersPage() {
     throw new Error("Could not load users.");
   }
 
-  const users = usersResult.data;
-  const invitations = invitationsResult.data;
   const now = Date.now();
+
+  return {
+    users: usersResult.data,
+    invitations: invitationsResult.data.map((invitation) => ({
+      ...invitation,
+      isExpired: new Date(invitation.expires_at).getTime() <= now,
+    })),
+  };
+}
+
+export default async function AdminUsersPage() {
+  // Non-admins get a 404. Hiding the nav link is not the protection.
+  const currentAdmin = await requireAdmin();
+  const { users, invitations } = await loadUsersPageData();
 
   return (
     <>
@@ -99,31 +113,27 @@ export default async function AdminUsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invitations.map((invitation) => {
-                    const expired =
-                      new Date(invitation.expires_at).getTime() <= now;
-                    return (
-                      <TableRow key={invitation.id}>
-                        <TableCell>{invitation.email}</TableCell>
-                        <TableCell className="capitalize">
-                          {invitation.role}
-                        </TableCell>
-                        <TableCell>
-                          {expired ? (
-                            <Badge variant="secondary">Expired</Badge>
-                          ) : (
-                            formatDateTime(invitation.expires_at)
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <InvitationActions
-                            invitationId={invitation.id}
-                            email={invitation.email}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {invitations.map((invitation) => (
+                    <TableRow key={invitation.id}>
+                      <TableCell>{invitation.email}</TableCell>
+                      <TableCell className="capitalize">
+                        {invitation.role}
+                      </TableCell>
+                      <TableCell>
+                        {invitation.isExpired ? (
+                          <Badge variant="secondary">Expired</Badge>
+                        ) : (
+                          formatDateTime(invitation.expires_at)
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <InvitationActions
+                          invitationId={invitation.id}
+                          email={invitation.email}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             )}
