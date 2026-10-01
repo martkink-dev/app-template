@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   DEACTIVATION_BAN_DURATION,
   INVITATION_TTL_HOURS,
+  PASSWORD_RESET_TTL_HOURS,
 } from "@/lib/users/config";
 import {
   generateInvitationToken,
@@ -24,11 +25,11 @@ import {
 /*
  * Admin actions for user management.
  *
- * Every action starts with requireAdmin(). Invitations are created and
- * revoked with the admin's own session, so RLS applies as a second check.
- * Changes to users (role, status, deletion) need the Supabase Auth admin API
- * or columns users may not write, so they use the admin client (secret key)
- * and run only after requireAdmin() has passed.
+ * Every action starts with requireAdmin(). Invitations and password reset
+ * links are created and revoked with the admin's own session, so RLS applies
+ * as a second check. Changes to users (role, status, deletion) need the
+ * Supabase Auth admin API or columns users may not write, so they use the
+ * admin client (secret key) and run only after requireAdmin() has passed.
  *
  * Admins cannot change their own account here. Because the acting admin is
  * always active, this also guarantees that at least one active admin remains.
@@ -44,6 +45,9 @@ export type CreateInvitationState = {
   invitation?: { email: string; link: string; expiresAt: string };
 };
 
+export type CreateLinkResult =
+  { ok: true; link: string; expiresAt: string } | { ok: false; error: string };
+
 async function getSiteOrigin() {
   const headerList = await headers();
   // Browsers send Origin with every Server Action request.
@@ -52,6 +56,10 @@ async function getSiteOrigin() {
   const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
   const protocol = headerList.get("x-forwarded-proto") ?? "https";
   return `${protocol}://${host}`;
+}
+
+function hoursFromNow(hours: number) {
+  return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 }
 
 export async function createInvitation(
@@ -84,12 +92,10 @@ export async function createInvitation(
     return { error: "A user with this email already exists." };
   }
 
-  const now = new Date();
-
   // Only one open invitation per email: a new invitation replaces the old one.
   const { error: revokeError } = await supabase
     .from("invitations")
-    .update({ revoked_at: now.toISOString() })
+    .update({ revoked_at: new Date().toISOString() })
     .eq("email", email)
     .is("accepted_at", null)
     .is("revoked_at", null);
@@ -99,9 +105,7 @@ export async function createInvitation(
   }
 
   const token = generateInvitationToken();
-  const expiresAt = new Date(
-    now.getTime() + INVITATION_TTL_HOURS * 60 * 60 * 1000,
-  ).toISOString();
+  const expiresAt = hoursFromNow(INVITATION_TTL_HOURS);
 
   const { error: insertError } = await supabase.from("invitations").insert({
     email,
@@ -155,7 +159,9 @@ export async function revokeInvitation(
 /** Validates the target user id and blocks actions on the admin's own account. */
 async function prepareUserAction(
   userId: string,
-): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; userId: string; adminId: string } | { ok: false; error: string }
+> {
   const currentAdmin = await requireAdmin();
 
   const parsed = userIdSchema.safeParse(userId);
@@ -168,7 +174,73 @@ async function prepareUserAction(
     };
   }
 
-  return { ok: true, userId: parsed.data };
+  return { ok: true, userId: parsed.data, adminId: currentAdmin.id };
+}
+
+/**
+ * Creates a one-time password reset link for another, active user.
+ * The admin sends the link to the user; no email server is needed.
+ */
+export async function createPasswordResetLink(
+  userId: string,
+): Promise<CreateLinkResult> {
+  const prepared = await prepareUserAction(userId);
+  if (!prepared.ok) return prepared;
+
+  const supabase = await createClient();
+
+  const { data: target, error: lookupError } = await supabase
+    .from("profiles")
+    .select("status")
+    .eq("id", prepared.userId)
+    .maybeSingle();
+  if (lookupError) {
+    console.error("createPasswordResetLink: lookup failed", lookupError);
+    return { ok: false, error: GENERIC_ERROR };
+  }
+  if (!target) return { ok: false, error: "Invalid user." };
+  if (target.status !== "active") {
+    return {
+      ok: false,
+      error: "Activate the user before resetting the password.",
+    };
+  }
+
+  // Only one open link per user: a new link replaces the old one.
+  const { error: revokeError } = await supabase
+    .from("password_resets")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("user_id", prepared.userId)
+    .is("used_at", null)
+    .is("revoked_at", null);
+  if (revokeError) {
+    console.error(
+      "createPasswordResetLink: revoke previous failed",
+      revokeError,
+    );
+    return { ok: false, error: GENERIC_ERROR };
+  }
+
+  const token = generateInvitationToken();
+  const expiresAt = hoursFromNow(PASSWORD_RESET_TTL_HOURS);
+
+  const { error: insertError } = await supabase.from("password_resets").insert({
+    user_id: prepared.userId,
+    token_hash: hashInvitationToken(token),
+    expires_at: expiresAt,
+    created_by: prepared.adminId,
+  });
+  if (insertError) {
+    console.error("createPasswordResetLink: insert failed", insertError);
+    return { ok: false, error: GENERIC_ERROR };
+  }
+
+  // The plain token is returned once and never stored.
+  return {
+    ok: true,
+    link: `${await getSiteOrigin()}/reset-password/${token}`,
+    expiresAt,
+  };
 }
 
 export async function deactivateUser(userId: string): Promise<ActionResult> {

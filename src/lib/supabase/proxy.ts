@@ -9,8 +9,9 @@ import type { Database } from "@/types/database.types";
  * (secure by default). Adjust per app.
  *
  * /invite: invitation links are opened by people who have no account yet.
+ * /reset-password: reset links are opened by people who cannot sign in.
  */
-const PUBLIC_PATHS = ["/", "/login", "/auth", "/invite"];
+const PUBLIC_PATHS = ["/", "/login", "/auth", "/invite", "/reset-password"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(

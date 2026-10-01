@@ -1,7 +1,14 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3000;
 const isCI = Boolean(process.env.CI);
+
+// E2E helpers (e2e/support/users.ts) need the same Supabase values as the
+// app. loadEnvConfig is Next.js's own loader, so it reads .env.local exactly
+// like `next dev` does. It never overrides variables that are already set,
+// so in CI the values from $GITHUB_ENV win (and there is no .env.local).
+loadEnvConfig(process.cwd());
 
 export default defineConfig({
   testDir: "./e2e",

@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -44,6 +45,10 @@ export default async function LoginPage({
         {/* The server action validates `next` again; never trust it here. */}
         <LoginForm next={nextPath} />
       </CardContent>
+      {/* There is no self-service reset: the app sends no emails. */}
+      <CardFooter className="text-sm text-muted-foreground">
+        Forgot your password? Ask an administrator for a reset link.
+      </CardFooter>
     </Card>
   );
 }

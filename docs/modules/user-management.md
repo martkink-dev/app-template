@@ -32,6 +32,16 @@ claims the invitation atomically, creates the Auth user with the secret key
 
 **Cancel.** _Cancel invitation_ sets `revoked_at`; the link stops working.
 
+**Reset a password.** `/admin/users` → _Create reset link_ on an active
+user's row. Works like an invitation: one-time link
+`https://<site>/reset-password/<token>`, valid for 24 hours
+(`PASSWORD_RESET_TTL_HOURS`), only the hash is stored in
+`public.password_resets`, a new link replaces the previous one. Admins cannot
+create a link for themselves. If no admin can sign in:
+`npm run users:reset-password -- you@example.com`. Resetting does not end the
+user's other sessions; deactivate the user first if the account may be
+compromised.
+
 **Deactivate.** Bans the user in Supabase Auth (no sign-in, no session
 refresh) and sets `profiles.status = 'inactive'`. `getCurrentUser()` checks
 the status on every request, so an access token issued before the ban cannot
@@ -57,6 +67,9 @@ cascade. Prefer deactivation when the user owns data you want to keep.
 | `src/app/invite/[token]/*`                               | Accept an invitation                            |
 | `src/app/admin/users/*`                                  | Admin UI and Server Actions                     |
 | `scripts/invite-admin.mjs`                               | Creates an admin invitation from the terminal   |
+| `src/lib/users/password-resets.ts`                       | Looks up an open reset link by token            |
+| `src/app/(auth)/reset-password/[token]/*`                | Set a new password from a reset link            |
+| `scripts/reset-password.mjs`                             | Creates a reset link from the terminal          |
 
 Required shadcn components:
 `npx shadcn@latest add button input label card badge table`
@@ -114,8 +127,6 @@ Staging or production: see "User management" in
 
 ## Not included (add when an app needs it)
 
-- **Password reset.** Without SMTP, the simplest option is an admin action
-  that creates a one-time reset link in the same way as an invitation.
 - **Changing your own password** while signed in
   (`supabase.auth.updateUser({ password })`).
 - **More roles.** Add values to `public.app_role` in a new migration and to
